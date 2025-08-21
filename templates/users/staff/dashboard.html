@@ -1,5 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Bienvenido Funcionario</h1>
-<p>Aquí están tus funciones como personal autorizado.</p>
+<h2>Solicitudes de Constancias</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Usuario</th>
+      <th>Tipo</th>
+      <th>Fechas</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in solicitudes %}
+    <tr>
+      <td>{{ s.usuario.nombre_completo }}</td>
+      <td>{{ s.get_tipo_constancia_display }}</td>
+      <td>{{ s.fecha_inicial }} → {{ s.fecha_final }}</td>
+      <td>{{ s.get_estado_display }}</td>
+      <td>
+        <a href="{% comment %}{% url 'generar_constancia' s.id %}{% endcomment %}#" class="btn btn-primary btn-sm">Generar</a> 
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

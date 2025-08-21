@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
+from django.conf import settings
 
 TIPOS_DOCUMENTO = [
     ('CC', 'Cédula de ciudadanía'),
@@ -73,3 +74,29 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.nombre_completo} ({self.numero_documento})"
+    
+class Constancia(models.Model):
+    TIPOS = [
+        ("estudio", "Constancia de Estudio"),
+        ("laboral", "Constancia Laboral"),
+        ("un_dia", "Constancia por un solo día"),
+        ("otro", "Otro"),
+    ]
+
+    ESTADOS = [
+        ("pendiente", "Pendiente"),
+        ("en_proceso", "En Proceso"),
+        ("firmada", "Firmada"),
+        ("rechazada", "Rechazada"),
+    ]
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    fecha_inicial = models.DateField()
+    fecha_final = models.DateField()
+    tipo_constancia = models.CharField(max_length=20, choices=TIPOS)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default="pendiente")
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.usuario} - {self.tipo_constancia} ({self.estado})"

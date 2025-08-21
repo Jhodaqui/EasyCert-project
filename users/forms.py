@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.core.files.storage import default_storage
-from .models import CustomUser, TIPOS_DOCUMENTO
+from .models import CustomUser, TIPOS_DOCUMENTO, Constancia
 from .validators import validate_pdf
 from datetime import date
 
@@ -94,7 +94,7 @@ class ConstanciaForm(forms.Form):
     numero_documento = forms.CharField(label="Número Documento", disabled=True)
     tipo_documento = forms.CharField(label="Tipo Documento", disabled=True)
     email = forms.EmailField(label="Correo electrónico", disabled=True)
-    
+
     fecha_inicial = forms.DateField(
         label="Fecha inicial de la constancia",
         widget=forms.DateInput(attrs={"type": "date"})
@@ -109,25 +109,28 @@ class ConstanciaForm(forms.Form):
             ("", "Seleccione...."),
             ("estudio", "Constancia de Estudio"),
             ("laboral", "Constancia Laboral"),
+            ("un_dia", "Constancia por un solo día"),  # 👈 nueva opción
             ("otro", "Otro"),
         ]
     )
 
-    # 🔹 Validaciones personalizadas
+    # 🔹 Validaciones
     def clean(self):
         cleaned_data = super().clean()
         fecha_inicial = cleaned_data.get("fecha_inicial")
         fecha_final = cleaned_data.get("fecha_final")
+        tipo = cleaned_data.get("tipo_constancia")
 
         if fecha_inicial and fecha_final:
+            # ❌ Caso 1: inicial después de final
             if fecha_inicial > fecha_final:
-                raise forms.ValidationError("La fecha inicial no puede ser mayor que la fecha final.")
+                self.add_error("fecha_inicial", "La fecha inicial no puede ser mayor que la fecha final.")
+                self.add_error("fecha_final", "La fecha final no puede ser menor que la fecha inicial.")
 
-            if fecha_final < fecha_inicial:
-                raise forms.ValidationError("La fecha final no puede ser menor que la fecha inicial.")
-
-            if fecha_inicial > date.today():
-                raise forms.ValidationError("La fecha inicial no puede estar en el futuro.")
+            # ❌ Caso 2: fechas iguales (permitido solo si tipo = 'un_dia')
+            if fecha_inicial == fecha_final and tipo != "un_dia":
+                self.add_error("fecha_inicial", "Las fechas no pueden ser iguales (excepto en constancias de un solo día).")
+                self.add_error("fecha_final", "Las fechas no pueden ser iguales (excepto en constancias de un solo día).")
 
         return cleaned_data
 

@@ -2,23 +2,27 @@
 {% block content %}
 <h2>Solicita tu Constancia aquí</h2>
 
-<form method="post">
+<form method="post" id="constanciaForm">
     {% csrf_token %}
+
     {{ form.non_field_errors }}
 
     <p>
       {{ form.nombre_completo.label_tag }} {{ form.nombre_completo }}
+      {{ form.nombre_completo.errors }}
     </p>
     <p>
       {{ form.numero_documento.label_tag }} {{ form.numero_documento }}
+      {{ form.numero_documento.errors }}
     </p>
     <p>
       {{ form.tipo_documento.label_tag }} {{ form.tipo_documento }}
+      {{ form.tipo_documento.errors }}
     </p>
     <p>
       {{ form.email.label_tag }} {{ form.email }}
+      {{ form.email.errors }}
     </p>
-
     <p>
       {{ form.fecha_inicial.label_tag }} {{ form.fecha_inicial }}
       {{ form.fecha_inicial.errors }}
@@ -32,6 +36,30 @@
       {{ form.tipo_constancia.errors }}
     </p>
 
-    <button type="submit">Solicitar</button>
+    <button type="submit" class="btn btn-primary">Solicitar</button>
 </form>
+
+<!-- Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-4 text-center">
+      <div class="modal-body">
+        <h5>Tu solicitud ha sido enviada</h5>
+        <p>Verifica tu información, si tienes alguna duda corrobora tus datos</p>
+        <a href="{% url 'user_dashboard' %}" class="btn btn-success">Aceptar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    {% if form_valido %}
+      var modalEl = document.getElementById("confirmModal");
+      var modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    {% endif %}
+  });
+</script>
+
 {% endblock %}
