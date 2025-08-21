@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Enlace no válido</h2>
+<p>El enlace de activación no es válido o ha expirado.</p>
+<p><a href="{% url 'resend_activation' %}">Reenviar activación</a></p>
+{% endblock %}

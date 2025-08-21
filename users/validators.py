@@ -12,24 +12,22 @@ def validate_pdf(uploaded_file):
     if uploaded_file.size > MAX_PDF_SIZE_MB * 1024 * 1024:
         raise ValidationError(f"El PDF supera {MAX_PDF_SIZE_MB} MB.")
 
-    # MIME real (si python-magic está disponible)
+    uploaded_file.open()
+    header = uploaded_file.read(2048)
+    uploaded_file.seek(0)
+
     if magic:
-        mime = magic.from_buffer(uploaded_file.read(2048), mime=True)
-        uploaded_file.seek(0)
+        mime = magic.from_buffer(header, mime=True)
         if mime not in ("application/pdf", "application/x-pdf"):
-            raise ValidationError("El archivo no es un PDF (MIME).")
+            raise ValidationError("El archivo no parece un PDF (MIME).")
     else:
-        # simple check header
-        header = uploaded_file.read(5)
-        uploaded_file.seek(0)
-        if header != b"%PDF-":
+        if not header.startswith(b"%PDF-"):
             raise ValidationError("El archivo no tiene cabecera PDF válida.")
 
-    # intentar leer con PyPDF2
     try:
-        reader = PdfReader(uploaded_file)
-        _ = len(reader.pages)
+        uploaded_file.seek(0)
+        PdfReader(uploaded_file)
         uploaded_file.seek(0)
     except Exception:
         uploaded_file.seek(0)
-        raise ValidationError("No se pudo leer el PDF. Verifica que no esté corrupto.")
+        raise ValidationError("No se pudo leer el PDF. Puede estar corrupto.")

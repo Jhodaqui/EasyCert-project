@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reenviar activación</h2>
+<form method="post">{% csrf_token %}
+  <p><label>Correo:</label><input type="email" name="email" required></p>
+  <button type="submit">Reenviar</button>
+</form>
+{% endblock %}

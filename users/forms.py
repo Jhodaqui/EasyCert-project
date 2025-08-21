@@ -1,10 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.core.files.storage import default_storage
 from .models import CustomUser, TIPOS_DOCUMENTO
 from .validators import validate_pdf
 
-ALLOWED_EMAIL_DOMAINS = {"gmail.com","yahoo.com","outlook.com","hotmail.com","icloud.com"}
+ALLOWED_EMAIL_DOMAINS = {"gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"}
 
 class RegisterForm(forms.ModelForm):
     password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=True)
@@ -52,23 +53,37 @@ class RegisterForm(forms.ModelForm):
         return cleaned
 
     def save(self, commit=True):
-        # Guardamos en 2 pasos para asegurar que numero_documento está establecido antes de guardar el archivo
         user = super().save(commit=False)
-        user.email = self.cleaned_data["email"].lower()
-        user.numero_documento = self.cleaned_data["numero_documento"]
         user.nombre_completo = self.cleaned_data["nombre_completo"]
         user.tipo_documento = self.cleaned_data["tipo_documento"]
+        user.numero_documento = self.cleaned_data["numero_documento"]
+        user.email = self.cleaned_data["email"].lower()
         user.set_password(self.cleaned_data["password1"])
 
-        # Asignamos el archivo al campo del modelo: Django llamará upload_to y usará numero_documento
         uploaded_file = self.cleaned_data.get("documento_pdf")
         if uploaded_file:
+            folder = f"documents/{user.numero_documento}"
+            target_name = f"{user.numero_documento}.pdf"
+            target_path = f"{folder}/{target_name}"
+            # eliminar existente para forzar overwrite
+            if default_storage.exists(target_path):
+                default_storage.delete(target_path)
             user.documento_pdf = uploaded_file
 
         if commit:
             user.save()
         return user
 
+
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Correo electrónico")
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
+
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(label="Correo electrónico")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if not CustomUser.objects.filter(email=email, is_active=True).exists():
+            raise ValidationError("No existe un usuario activo con este correo.")
+        return email
