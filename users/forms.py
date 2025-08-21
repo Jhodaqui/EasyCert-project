@@ -4,6 +4,7 @@ from django.core.validators import RegexValidator
 from django.core.files.storage import default_storage
 from .models import CustomUser, TIPOS_DOCUMENTO
 from .validators import validate_pdf
+from datetime import date
 
 ALLOWED_EMAIL_DOMAINS = {"gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"}
 
@@ -87,3 +88,51 @@ class PasswordResetRequestForm(forms.Form):
         if not CustomUser.objects.filter(email=email, is_active=True).exists():
             raise ValidationError("No existe un usuario activo con este correo.")
         return email
+    
+class ConstanciaForm(forms.Form):
+    nombre_completo = forms.CharField(label="Nombre Completo", disabled=True)
+    numero_documento = forms.CharField(label="Número Documento", disabled=True)
+    tipo_documento = forms.CharField(label="Tipo Documento", disabled=True)
+    email = forms.EmailField(label="Correo electrónico", disabled=True)
+    
+    fecha_inicial = forms.DateField(
+        label="Fecha inicial de la constancia",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
+    fecha_final = forms.DateField(
+        label="Fecha final de la constancia",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
+    tipo_constancia = forms.ChoiceField(
+        label="Tipo de constancia",
+        choices=[
+            ("", "Seleccione...."),
+            ("estudio", "Constancia de Estudio"),
+            ("laboral", "Constancia Laboral"),
+            ("otro", "Otro"),
+        ]
+    )
+
+    # 🔹 Validaciones personalizadas
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicial = cleaned_data.get("fecha_inicial")
+        fecha_final = cleaned_data.get("fecha_final")
+
+        if fecha_inicial and fecha_final:
+            if fecha_inicial > fecha_final:
+                raise forms.ValidationError("La fecha inicial no puede ser mayor que la fecha final.")
+
+            if fecha_final < fecha_inicial:
+                raise forms.ValidationError("La fecha final no puede ser menor que la fecha inicial.")
+
+            if fecha_inicial > date.today():
+                raise forms.ValidationError("La fecha inicial no puede estar en el futuro.")
+
+        return cleaned_data
+
+    def clean_tipo_constancia(self):
+        tipo = self.cleaned_data.get("tipo_constancia")
+        if not tipo:
+            raise forms.ValidationError("Debe seleccionar un tipo de constancia.")
+        return tipo

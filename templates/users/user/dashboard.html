@@ -1,5 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Bienvenido Usuario</h1>
-<p>Aquí puedes gestionar tus trámites.</p>
+<h2>Solicita tu Constancia aquí</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <p>
+      {{ form.nombre_completo.label_tag }} {{ form.nombre_completo }}
+    </p>
+    <p>
+      {{ form.numero_documento.label_tag }} {{ form.numero_documento }}
+    </p>
+    <p>
+      {{ form.tipo_documento.label_tag }} {{ form.tipo_documento }}
+    </p>
+    <p>
+      {{ form.email.label_tag }} {{ form.email }}
+    </p>
+
+    <p>
+      {{ form.fecha_inicial.label_tag }} {{ form.fecha_inicial }}
+      {{ form.fecha_inicial.errors }}
+    </p>
+    <p>
+      {{ form.fecha_final.label_tag }} {{ form.fecha_final }}
+      {{ form.fecha_final.errors }}
+    </p>
+    <p>
+      {{ form.tipo_constancia.label_tag }} {{ form.tipo_constancia }}
+      {{ form.tipo_constancia.errors }}
+    </p>
+
+    <button type="submit">Solicitar</button>
+</form>
 {% endblock %}

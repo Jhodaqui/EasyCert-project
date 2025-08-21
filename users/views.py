@@ -9,7 +9,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
-from .forms import RegisterForm, LoginForm
+from .forms import RegisterForm, LoginForm, ConstanciaForm
 from .models import CustomUser
 
 # Create your views here.
@@ -188,7 +188,26 @@ def staff_dashboard(request):
 
 @login_required
 def user_dashboard(request):
-    return render(request, "users/user/dashboard.html")
+    user = request.user  # usuario autenticado
+    
+    # Inicializamos el formulario con los datos del usuario
+    initial_data = {
+        "nombre_completo": user.nombre_completo,
+        "numero_documento": user.numero_documento,
+        "tipo_documento": user.tipo_documento,
+        "email": user.email,
+    }
+    
+    if request.method == "POST":
+        form = ConstanciaForm(request.POST, initial=initial_data)
+        if form.is_valid():
+            # Aquí guardas la solicitud en la BD (puedes crear un modelo Constancia)
+            # Por ahora, solo mostramos que fue válido
+            print("Solicitud:", form.cleaned_data)
+            return redirect("user_dashboard")  # recarga el dashboard
+    else:
+        form = ConstanciaForm(initial=initial_data)
+    return render(request, "users/user/dashboard.html", {"form": form})
 
 # Gestión de roles (solo para admins)
 @login_required
