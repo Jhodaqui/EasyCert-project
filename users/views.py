@@ -87,21 +87,32 @@ def resend_activation(request):
 
 # Login
 def login_view(request):
+    form = LoginForm(request.POST or None)
+
     if request.method == "POST":
-        form = LoginForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data["email"].lower()
-            password = form.cleaned_data["password"]
-            user = authenticate(request, username=email, password=password)
+            email = form.cleaned_data.get("email")
+            password = form.cleaned_data.get("password")
+            user = authenticate(request, email=email, password=password)
+
             if user is not None:
-                if not user.is_active:
-                    messages.error(request, "Tu cuenta no está activada. Revisa tu correo para activarla.")
-                    return redirect("login")
-                login(request, user)
-                return redirect("home")
-            messages.error(request, "Correo o contraseña incorrectos.")
-    else:
-        form = LoginForm()
+                if user.is_active:
+                    login(request, user)
+                    messages.success(request, f"Bienvenido {user.nombre_completo}")
+
+                    # 👇 Redirección según rol
+                    if user.role == "admin":
+                        return redirect("admin_dashboard")
+                    elif user.role == "staff":
+                        return redirect("staff_dashboard")
+                    else:
+                        return redirect("user_dashboard")
+                else:
+                    messages.error(request, "Tu cuenta aún no está activada. Revisa tu correo.")
+            else:
+                messages.error(request, "Correo o contraseña incorrectos.")
+    
+    # 👉 Aquí sí enviamos el form al template
     return render(request, "users/login.html", {"form": form})
 
 
@@ -165,3 +176,36 @@ def password_reset_confirm_view(request, uidb64, token):
         return render(request, "users/password_reset_confirm.html", {"validlink": True})
     messages.error(request, "El enlace no es válido o ha expirado.")
     return redirect("password_reset")
+
+# vistas segun roles
+@login_required
+def admin_dashboard(request):
+    return render(request, "users/admin/dashboard.html")
+
+@login_required
+def staff_dashboard(request):
+    return render(request, "users/staff/dashboard.html")
+
+@login_required
+def user_dashboard(request):
+    return render(request, "users/user/dashboard.html")
+
+# Gestión de roles (solo para admins)
+@login_required
+def manage_roles(request):
+    if request.user.role != "admin":
+        return redirect("home")  # seguridad, no dejar que otro entre
+    
+    users = CustomUser.objects.all()
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        new_role = request.POST.get("role")
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            user.role = new_role
+            user.save()
+        except CustomUser.DoesNotExist:
+            pass
+        return redirect("manage_roles")
+
+    return render(request, "users/roles/manage_roles.html", {"users": users})

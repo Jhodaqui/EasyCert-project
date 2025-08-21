@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Gestión de Roles</h1>
+<table>
+  <tr>
+    <th>Usuario</th>
+    <th>Email</th>
+    <th>Rol actual</th>
+    <th>Cambiar rol</th>
+  </tr>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.username }}</td>
+    <td>{{ u.email }}</td>
+    <td>{{ u.role }}</td>
+    <td>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ u.id }}">
+        <select name="role">
+          <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
+          <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
+          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+        </select>
+        <button type="submit">Actualizar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

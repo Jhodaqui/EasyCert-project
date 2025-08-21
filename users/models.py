@@ -46,13 +46,24 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    ROLE_CHOICES = (
+        ("admin", "Administrador"),
+        ("staff", "Funcionario"),
+        ("user", "Usuario"),
+    )
+
+    # Campos básicos
     nombre_completo = models.CharField("Nombres completos", max_length=150)
     tipo_documento = models.CharField("Tipo de documento", max_length=10, choices=TIPOS_DOCUMENTO)
     numero_documento = models.CharField("Número de documento", max_length=15, unique=True)
     email = models.EmailField("Correo electrónico", unique=True)
     documento_pdf = models.FileField("Copia documento (PDF)", upload_to=user_document_upload_path, null=True, blank=True)
 
-    is_active = models.BooleanField(default=False)  # por defecto inactivo hasta activar
+    # Roles
+    role = models.CharField("Rol de usuario", max_length=20, choices=ROLE_CHOICES, default="user")
+
+    # Estado
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
