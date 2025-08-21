@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Bienvenido, {{ request.user.nombre_completo }}</h2>
+<p>Tipo doc: {{ request.user.tipo_documento }} - Número: {{ request.user.numero_documento }}</p>
+<p><a href="{% url 'logout' %}">Cerrar sesión</a></p>
+{% endblock %}

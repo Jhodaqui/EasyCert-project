@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Registro EasyCert</h2>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {{ form.nombre_completo.label_tag }} {{ form.nombre_completo }} {{ form.nombre_completo.errors }}<br>
+  {{ form.tipo_documento.label_tag }} {{ form.tipo_documento }} {{ form.tipo_documento.errors }}<br>
+  {{ form.numero_documento.label_tag }} {{ form.numero_documento }} {{ form.numero_documento.errors }}<br>
+  {{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}<br>
+  {{ form.documento_pdf.label_tag }} {{ form.documento_pdf }} {{ form.documento_pdf.errors }}<br>
+  {{ form.password1.label_tag }} {{ form.password1 }}<br>
+  {{ form.password2.label_tag }} {{ form.password2 }}<br>
+  <button type="submit">Registrarse</button>
+</form>
+<p><a href="{% url 'login' %}">¿Ya tienes cuenta? Inicia sesión</a></p>
+{% endblock %}

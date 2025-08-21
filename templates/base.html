@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><title>EasyCert</title></head><body>
+{% if messages %}
+  <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+{% endif %}
+{% block content %}{% endblock %}
+</body></html>
