@@ -1,5 +1,214 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .register-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 40px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .register-title {
+        text-align: center;
+        color: #2d3748;
+        margin-bottom: 35px;
+        font-weight: 700;
+        font-size: 32px;
+    }
+    
+    .register-form {
+        margin-top: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 16px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        outline: none;
+    }
+    
+    .form-group input[type="file"] {
+        padding: 12px;
+        background-color: #f7fafc;
+    }
+    
+    .error-message {
+        color: #e53e3e;
+        font-size: 14px;
+        margin-top: 5px;
+        font-weight: 500;
+    }
+    
+    .register-btn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
+        margin-top: 10px;
+    }
+    
+    .register-btn:hover {
+        background: linear-gradient(135deg, #3b5bdb 0%, #2d4fc0 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(74, 108, 247, 0.4);
+    }
+    
+    .login-link {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 16px;
+    }
+    
+    .login-link a {
+        color: #4a6cf7;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .login-link a:hover {
+        color: #3b5bdb;
+        text-decoration: underline;
+    }
+    
+    .password-help {
+        font-size: 14px;
+        color: #718096;
+        margin-top: 5px;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .register-container {
+            margin: 20px;
+            padding: 25px;
+        }
+        
+        .register-title {
+            font-size: 28px;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 25px;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <h2 class="register-title">Registro EasyCert</h2>
+    <form method="post" enctype="multipart/form-data" class="register-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <div class="form-group">
+            {{ form.nombre_completo.label_tag }}
+            {{ form.nombre_completo }}
+            {% if form.nombre_completo.errors %}
+                <div class="error-message">{{ form.nombre_completo.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.tipo_documento.label_tag }}
+                {{ form.tipo_documento }}
+                {% if form.tipo_documento.errors %}
+                    <div class="error-message">{{ form.tipo_documento.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                {{ form.numero_documento.label_tag }}
+                {{ form.numero_documento }}
+                {% if form.numero_documento.errors %}
+                    <div class="error-message">{{ form.numero_documento.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="error-message">{{ form.email.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.documento_pdf.label_tag }}
+            {{ form.documento_pdf }}
+            {% if form.documento_pdf.errors %}
+                <div class="error-message">{{ form.documento_pdf.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            <div class="password-help">Mínimo 8 caracteres, con letras y números</div>
+        </div>
+        
+        <div class="form-group">
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            <div class="password-help">Repite la misma contraseña</div>
+        </div>
+        
+        <button type="submit" class="register-btn">Registrarse</button>
+    </form>
+    
+    <div class="login-link">
+        <p><a href="{% url 'login' %}">¿Ya tienes cuenta? Inicia sesión</a></p>
+    </div>
+</div>
+{% endblock %}
+
+{% comment %} {% extends "base.html" %}
+{% block content %}
 <h2>Registro EasyCert</h2>
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
@@ -14,4 +223,4 @@
   <button type="submit">Registrarse</button>
 </form>
 <p><a href="{% url 'login' %}">¿Ya tienes cuenta? Inicia sesión</a></p>
-{% endblock %}
+{% endblock %} {% endcomment %}

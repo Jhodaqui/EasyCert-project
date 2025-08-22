@@ -1,8 +1,186 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .resend-activation-container {
+        max-width: 500px;
+        margin: 60px auto;
+        padding: 40px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .resend-activation-icon {
+        font-size: 64px;
+        color: #4a6cf7;
+        margin-bottom: 20px;
+    }
+    
+    .resend-activation-title {
+        color: #2d3748;
+        margin-bottom: 20px;
+        font-weight: 700;
+        font-size: 28px;
+    }
+    
+    .resend-activation-text {
+        color: #718096;
+        margin-bottom: 30px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    .resend-activation-form {
+        margin-bottom: 25px;
+        text-align: left;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 16px;
+        text-align: left;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        outline: none;
+    }
+    
+    .resend-btn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
+    }
+    
+    .resend-btn:hover {
+        background: linear-gradient(135deg, #3b5bdb 0%, #2d4fc0 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(74, 108, 247, 0.4);
+    }
+    
+    .resend-btn i {
+        margin-right: 8px;
+    }
+    
+    .login-link {
+        margin-top: 25px;
+        font-size: 16px;
+    }
+    
+    .login-link a {
+        color: #4a6cf7;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .login-link a:hover {
+        color: #3b5bdb;
+        text-decoration: underline;
+    }
+    
+    .success-message {
+        background-color: #f0fff4;
+        border: 1px solid #9ae6b4;
+        color: #2f855a;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    @media (max-width: 576px) {
+        .resend-activation-container {
+            margin: 30px 20px;
+            padding: 30px 20px;
+        }
+        
+        .resend-activation-title {
+            font-size: 24px;
+        }
+        
+        .resend-activation-text {
+            font-size: 15px;
+        }
+        
+        .resend-activation-icon {
+            font-size: 48px;
+        }
+    }
+</style>
+
+<div class="resend-activation-container">
+    <div class="resend-activation-icon">
+        <i class="fas fa-paper-plane"></i>
+    </div>
+    
+    <h2 class="resend-activation-title">Reenviar activación</h2>
+    
+    <p class="resend-activation-text">
+        Ingresa tu dirección de correo electrónico y te enviaremos un nuevo enlace de activación.
+    </p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success-message">
+                <i class="fas fa-check-circle"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" class="resend-activation-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" required placeholder="tu@ejemplo.com">
+        </div>
+        
+        <button type="submit" class="resend-btn">
+            <i class="fas fa-paper-plane"></i>Reenviar
+        </button>
+    </form>
+    
+    <div class="login-link">
+        <p><a href="{% url 'login' %}">Volver al inicio de sesión</a></p>
+    </div>
+</div>
+
+<!-- Font Awesome para los iconos -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% comment %} {% extends "base.html" %}
+{% block content %}
 <h2>Reenviar activación</h2>
 <form method="post">{% csrf_token %}
   <p><label>Correo:</label><input type="email" name="email" required></p>
   <button type="submit">Reenviar</button>
 </form>
-{% endblock %}
+{% endblock %} {% endcomment %}

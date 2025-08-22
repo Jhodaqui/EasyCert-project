@@ -1,6 +1,117 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .invalid-link-container {
+        max-width: 500px;
+        margin: 60px auto;
+        padding: 40px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .invalid-link-icon {
+        font-size: 64px;
+        color: #e53e3e;
+        margin-bottom: 20px;
+    }
+    
+    .invalid-link-title {
+        color: #2d3748;
+        margin-bottom: 20px;
+        font-weight: 700;
+        font-size: 28px;
+    }
+    
+    .invalid-link-text {
+        color: #718096;
+        margin-bottom: 30px;
+        font-size: 18px;
+        line-height: 1.5;
+    }
+    
+    .resend-link {
+        display: inline-block;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
+        margin-top: 15px;
+    }
+    
+    .resend-link:hover {
+        background: linear-gradient(135deg, #3b5bdb 0%, #2d4fc0 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(74, 108, 247, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .resend-link i {
+        margin-right: 8px;
+    }
+    
+    .support-text {
+        margin-top: 25px;
+        font-size: 14px;
+        color: #a0aec0;
+    }
+    
+    @media (max-width: 576px) {
+        .invalid-link-container {
+            margin: 30px 20px;
+            padding: 30px 20px;
+        }
+        
+        .invalid-link-title {
+            font-size: 24px;
+        }
+        
+        .invalid-link-text {
+            font-size: 16px;
+        }
+        
+        .invalid-link-icon {
+            font-size: 48px;
+        }
+    }
+</style>
+
+<div class="invalid-link-container">
+    <div class="invalid-link-icon">
+        <i class="fas fa-exclamation-circle"></i>
+    </div>
+    
+    <h2 class="invalid-link-title">Enlace no válido</h2>
+    
+    <p class="invalid-link-text">
+        El enlace de activación no es válido o ha expirado.
+    </p>
+    
+    <a href="{% url 'resend_activation' %}" class="resend-link">
+        <i class="fas fa-paper-plane"></i>Reenviar activación
+    </a>
+    
+    <p class="support-text">
+        Si continúas teniendo problemas, contacta con soporte técnico.
+    </p>
+</div>
+
+<!-- Font Awesome para los iconos -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% comment %} {% extends "base.html" %}
+{% block content %}
 <h2>Enlace no válido</h2>
 <p>El enlace de activación no es válido o ha expirado.</p>
 <p><a href="{% url 'resend_activation' %}">Reenviar activación</a></p>
-{% endblock %}
+{% endblock %} {% endcomment %}
