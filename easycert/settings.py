@@ -1,3 +1,4 @@
+
 """
 Django settings for easycert project.
 
@@ -149,3 +150,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "users.CustomUser" # con esto se indica que se usará el modelo de usuario personalizado
 
+# css lo que añadi reciente mente
+STATIC_URL = '/static/'
+
+import os
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
