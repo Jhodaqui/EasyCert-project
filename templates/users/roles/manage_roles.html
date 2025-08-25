@@ -1,5 +1,301 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .roles-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .roles-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .roles-title {
+        color: #2d3748;
+        margin: 0;
+        font-weight: 700;
+        font-size: 32px;
+    }
+    
+    .logout-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(229, 62, 62, 0.3);
+    }
+    
+    .logout-btn:hover {
+        background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(229, 62, 62, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .logout-btn i {
+        margin-right: 8px;
+    }
+    
+    .roles-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .roles-table th {
+        background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .roles-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .roles-table tr:nth-child(even) {
+        background-color: #f7fafc;
+    }
+    
+    .roles-table tr:hover {
+        background-color: #edf2f7;
+    }
+    
+    .role-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+    }
+    
+    .role-select {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .role-select:focus {
+        border-color: #4a6cf7;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+    }
+    
+    .update-btn {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .update-btn:hover {
+        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        transform: translateY(-1px);
+    }
+    
+    .role-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .role-user {
+        background-color: #e9f5ff;
+        color: #3182ce;
+    }
+    
+    .role-staff {
+        background-color: #fff5e6;
+        color: #dd6b20;
+    }
+    
+    .role-admin {
+        background-color: #e6fffa;
+        color: #319795;
+    }
+    
+    .stats-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-card {
+        flex: 1;
+        min-width: 150px;
+        background: linear-gradient(135deg, #f7f9fc 0%, #edf2f7 100%);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #4a6cf7;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #718096;
+    }
+    
+    .no-users {
+        text-align: center;
+        padding: 40px;
+        color: #718096;
+        font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+        .roles-container {
+            margin: 20px;
+            padding: 20px;
+        }
+        
+        .roles-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .roles-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .role-form {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .role-select {
+            width: 100%;
+        }
+        
+        .update-btn {
+            width: 100%;
+        }
+        
+        .stats-container {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="roles-container">
+    <div class="roles-header">
+        <h1 class="roles-title">Gestión de Roles</h1>
+        <a href="{% url 'logout' %}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>Cerrar sesión
+        </a>
+    </div>
+    
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-number">{{ users|length }}</div>
+            <div class="stat-label">Usuarios totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ admin_count }}</div>
+            <div class="stat-label">Administradores</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ staff_count }}</div>
+            <div class="stat-label">Staff</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ user_count }}</div>
+            <div class="stat-label">Usuarios</div>
+        </div>
+    </div>
+    
+    {% if users %}
+    <table class="roles-table">
+        <tr>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Rol actual</th>
+            <th>Cambiar rol</th>
+        </tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+                <span class="role-badge role-{{ u.role }}">
+                    {% if u.role == "user" %}Usuario{% endif %}
+                    {% if u.role == "staff" %}Staff{% endif %}
+                    {% if u.role == "admin" %}Admin{% endif %}
+                </span>
+            </td>
+            <td>
+                <form method="post" class="role-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <select name="role" class="role-select">
+                        <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
+                        <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
+                        <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+                    </select>
+                    <button type="submit" class="update-btn">Actualizar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="no-users">
+        <p>No hay usuarios registrados en el sistema.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Font Awesome para los iconos -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% comment %} {% extends "base.html" %}
+{% block content %}
 <h1>Gestión de Roles</h1>
 <p><a href="{% url 'logout' %}">Cerrar sesión</a></p>
 <table>
@@ -29,4 +325,4 @@
   </tr>
   {% endfor %}
 </table>
-{% endblock %}
+{% endblock %} {% endcomment %}

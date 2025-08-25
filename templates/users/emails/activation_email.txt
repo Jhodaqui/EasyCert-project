@@ -1,8 +1,185 @@
-Hola {{ user.nombre_completo }},
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activación de cuenta - EasyCert</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f9fc;
+            color: #4a5568;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .email-title {
+            color: white;
+            font-size: 24px;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .activation-button {
+            display: block;
+            width: 250px;
+            margin: 30px auto;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #4a6cf7 0%, #3b5bdb 100%);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
+        }
+        
+        .activation-link {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #718096;
+            word-break: break-all;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 30px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f7fafc;
+            border-radius: 20px 20px 0 0;
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        .warning {
+            background-color: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #c53030;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-icon {
+            display: inline-block;
+            margin: 0 10px;
+            color: #4a6cf7;
+            font-size: 20px;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 600px) {
+            .email-body {
+                padding: 30px 20px;
+            }
+            
+            .activation-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">EasyCert</div>
+            <h1 class="email-title">Activación de Cuenta</h1>
+        </div>
+        
+        <div class="email-body">
+            <p class="greeting">Hola {{ user.nombre_completo }},</p>
+            
+            <p class="message">
+                Gracias por registrarte en EasyCert. Estamos emocionados de tenerte a bordo.
+                Para comenzar a utilizar todos los servicios de certificación, necesitas activar tu cuenta.
+            </p>
+            
+            <a href="{{ activation_link }}" class="activation-button">
+                Activar mi cuenta
+            </a>
+            
+            <div class="activation-link">
+                <p>O copia y pega este enlace en tu navegador:</p>
+                <p>{{ activation_link }}</p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="warning">
+                <p><strong>Importante:</strong> Si no solicitaste crear una cuenta en EasyCert, por favor ignora este correo electrónico. Tu dirección de email podría haber sido ingresada por error.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© {% now "Y" %} EasyCert. Todos los derechos reservados.</p>
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            
+            <div class="social-links">
+                <a href="#" class="social-icon">📱</a>
+                <a href="#" class="social-icon">💻</a>
+                <a href="#" class="social-icon">📧</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+{% comment %} Hola {{ user.nombre_completo }},
 
 Gracias por registrarte en EasyCert.
 
 Haz click en el siguiente enlace para activar tu cuenta:
 {{ activation_link }}
 
-Si no solicitaste esta cuenta, ignora este correo.
+Si no solicitaste esta cuenta, ignora este correo. {% endcomment %}
