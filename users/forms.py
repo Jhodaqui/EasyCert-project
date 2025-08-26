@@ -109,12 +109,12 @@ class ConstanciaForm(forms.Form):
             ("", "Seleccione...."),
             ("estudio", "Constancia de Estudio"),
             ("laboral", "Constancia Laboral"),
-            ("un_dia", "Constancia por un solo día"),  # 👈 nueva opción
+            ("un_dia", "Constancia por un solo día"),  #  nueva opción
             ("otro", "Otro"),
         ]
     )
 
-    # 🔹 Validaciones
+    #  Validaciones
     def clean(self):
         cleaned_data = super().clean()
         fecha_inicial = cleaned_data.get("fecha_inicial")
@@ -122,12 +122,12 @@ class ConstanciaForm(forms.Form):
         tipo = cleaned_data.get("tipo_constancia")
 
         if fecha_inicial and fecha_final:
-            # ❌ Caso 1: inicial después de final
+            #  Caso 1: inicial después de final
             if fecha_inicial > fecha_final:
                 self.add_error("fecha_inicial", "La fecha inicial no puede ser mayor que la fecha final.")
                 self.add_error("fecha_final", "La fecha final no puede ser menor que la fecha inicial.")
 
-            # ❌ Caso 2: fechas iguales (permitido solo si tipo = 'un_dia')
+            #  Caso 2: fechas iguales (permitido solo si tipo = 'un_dia')
             if fecha_inicial == fecha_final and tipo != "un_dia":
                 self.add_error("fecha_inicial", "Las fechas no pueden ser iguales (excepto en constancias de un solo día).")
                 self.add_error("fecha_final", "Las fechas no pueden ser iguales (excepto en constancias de un solo día).")

@@ -1,20 +1,33 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
+
 <center>
+  
     <div class="container">
       <div class="login-container">
-        <!-- Logo (espacio reservado para que agregues tu imagen) -->
+        <!-- Logo img EasyCert -->
         <div class="logo-container">
-          <div class="logo-placeholder">
-            <i class="fas fa-image"></i>
+          <div class="logo-placeholder">  
+            <img src="{% static 'img/EasyCert.jpg' %}" alt="Logo EasyCert">
           </div>
         </div>
 
         <h2 class="form-title">INICIA SESIÓN</h2>
 
+           <!-- MOSTRAR SOLO field_errors.general (nuevo sistema) -->
+        {% if field_errors.general %}
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ field_errors.general }}
+        </div>
+        {% endif %}
+
+        
+
         <form method="post">
           {% csrf_token %}
-          {% comment %} {{ form.non_field_errors }} {% endcomment %}
+
 
           <!-- Campo de correo electrónico -->
           <div class="form-group">
@@ -63,7 +76,7 @@
 <h2>Iniciar sesión</h2>
 <form method="post">
   {% csrf_token %}
-  {{ form.non_field_errors }}
+ 
   <p>{{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}</p>
   <p>{{ form.password.label_tag }} {{ form.password }} {{ form.password.errors }}</p>
   <button type="submit">Ingresar</button>

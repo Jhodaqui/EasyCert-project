@@ -85,9 +85,11 @@ def resend_activation(request):
     return render(request, "users/resend_activation.html")
 
 
+
 # Login
 def login_view(request):
     form = LoginForm(request.POST or None)
+    field_errors = {}  # Diccionario para errores específicos por campo
 
     if request.method == "POST":
         if form.is_valid():
@@ -100,7 +102,7 @@ def login_view(request):
                     login(request, user)
                     messages.success(request, f"Bienvenido {user.nombre_completo}")
 
-                    # 👇 Redirección según rol
+                    # Redirección según rol
                     if user.role == "admin":
                         return redirect("admin_dashboard")
                     elif user.role == "staff":
@@ -108,12 +110,23 @@ def login_view(request):
                     else:
                         return redirect("user_dashboard")
                 else:
-                    messages.error(request, "Tu cuenta aún no está activada. Revisa tu correo.")
+                    # Error específico para cuenta no activada
+                    field_errors['general'] = "⏳ Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico para activarla."
+                    # messages.error(request, "Tu cuenta aún no está activada. Revisa tu correo.")  # ELIMINADO
             else:
-                messages.error(request, "Correo o contraseña incorrectos.")
+                # Error específico para credenciales incorrectas
+                field_errors['general'] = "🔒 Correo electrónico o contraseña incorrectos. Verifica tus credenciales e intenta nuevamente."
+                # messages.error(request, "Correo o contraseña incorrectos.")  # ELIMINADO
+        else:
+            # Capturar errores de validación del formulario por campo
+            for field, errors in form.errors.items():
+                field_errors[field] = " ".join(errors)
     
-    # 👉 Aquí sí enviamos el form al template
-    return render(request, "users/login.html", {"form": form})
+    # Enviamos el form y los errores al template
+    return render(request, "users/login.html", {
+        "form": form,
+        "field_errors": field_errors
+    })
 
 
 # Logout

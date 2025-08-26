@@ -1,45 +1,55 @@
-
- {% extends "base.html" %}
+{% extends "base.html" %}
+{% load static %}
 {% block content %}
-<p><a href="{% url 'logout' %}">Cerrar sesión</a></p>
-<h2>Solicita tu Constancia aquí</h2>
 
-<form method="post" id="constanciaForm">
-    {% csrf_token %}
+<div class="constancia-container">
+  <div class="constancia-card">
+    <h2 class="constancia-title">BIENVENIDO AL SISTEMA DE GENERACION DE CONSTANCIAS</h2>
+    <p class="constancia-subtitle">Solicita tu Constancia aquí!!</p>
 
-    {{ form.non_field_errors }}
+    <form method="post" id="constanciaForm" class="constancia-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
 
-    <p>
-      {{ form.nombre_completo.label_tag }} {{ form.nombre_completo }}
-      {{ form.nombre_completo.errors }}
-    </p>
-    <p>
-      {{ form.numero_documento.label_tag }} {{ form.numero_documento }}
-      {{ form.numero_documento.errors }}
-    </p>
-    <p>
-      {{ form.tipo_documento.label_tag }} {{ form.tipo_documento }}
-      {{ form.tipo_documento.errors }}
-    </p>
-    <p>
-      {{ form.email.label_tag }} {{ form.email }}
-      {{ form.email.errors }}
-    </p>
-    <p>
-      {{ form.fecha_inicial.label_tag }} {{ form.fecha_inicial }}
-      {{ form.fecha_inicial.errors }}
-    </p>
-    <p>
-      {{ form.fecha_final.label_tag }} {{ form.fecha_final }}
-      {{ form.fecha_final.errors }}
-    </p>
-    <p>
-      {{ form.tipo_constancia.label_tag }} {{ form.tipo_constancia }}
-      {{ form.tipo_constancia.errors }}
-    </p>
+      <div class="form-group">
+        {{ form.nombre_completo }}
+        {{ form.nombre_completo.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.numero_documento }}
+        {{ form.numero_documento.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.tipo_documento }}
+        {{ form.tipo_documento.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.fecha_inicial }}
+        {{ form.fecha_inicial.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.fecha_final }}
+        {{ form.fecha_final.errors }}
+      </div>
+      <div class="form-group">
+        {{ form.tipo_constancia }}
+        {{ form.tipo_constancia.errors }}
+      </div>
 
-    <button type="submit" class="btn btn-primary">Solicitar</button>
-</form>
+      <button type="submit" class="btn-submit">Solicitar</button>
+      <a href="{% url 'login' %}" class="btn-ingresar">Ingresar</a>
+    </form>
+  </div>
+
+  <!-- Logo arriba a la derecha -->
+  <div class="constancia-logo">
+    <img src="{% static 'img/EasyCert.jpg' %}" alt="Logo EasyCert">
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="confirmModal" tabindex="-1">
@@ -64,4 +74,4 @@
   });
 </script>
 
-{% endblock %} 
+{% endblock %}
