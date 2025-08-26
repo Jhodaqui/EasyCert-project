@@ -1,75 +1,61 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-</head>
+{% extends "base.html" %}
+{% block content %}
 <center>
-<body>
     <div class="container">
-        <div class="login-container">
-            <!-- Logo (espacio reservado para que agregues tu imagen) -->
-            <div class="logo-container">
-                <div class="logo-placeholder">
-                    <i class="fas fa-image"></i>
-                </div>
-            </div>
-            
-            <h2 class="form-title">INICIA SESIÓN</h2>
-            
-            <form method="post">
-                {% csrf_token %}
-                
-                {{ form.non_field_errors }}
-                
-                <!-- Campo de correo electrónico -->
-                <div class="form-group">
-                    <div class="input-icon right">
-                        <input type="email" class="form-control" id="id_email" name="email" placeholder="Correo electrónico" required>
-                        <i class="fas fa-envelope icon-right"></i>
-                    </div>
-                    {% if form.email.errors %}
-                        <div class="error-message">{{ form.email.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <!-- Campo de contraseña -->
-                <div class="form-group">
-                    <div class="input-icon right">
-                        <input type="password" class="form-control" id="id_password" name="password" placeholder="Contraseña" required>
-                        <i class="fas fa-lock icon-right"></i>
-                    </div>
-                    {% if form.password.errors %}
-                        <div class="error-message">{{ form.password.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-login">
-                    <i class="fas fa-sign-in-alt me-2"></i>Ingresar
-                </button>
-            </form>
-            
-            <div class="links-container">
-                <a href="{% url 'register' %}"><i class="fas fa-user-plus me-1"></i>Registrarse</a>
-                <span class="divider">•</span>
-                <a href="{% url 'resend_activation' %}"><i class="fas fa-paper-plane me-1"></i>Reenviar activación</a>
-                <span class="divider">•</span>
-                <a href="{% url 'password_reset' %}"><i class="fas fa-key me-1"></i>¿Olvidaste tu contraseña?</a>
-            </div>
+      <div class="login-container">
+        <!-- Logo (espacio reservado para que agregues tu imagen) -->
+        <div class="logo-container">
+          <div class="logo-placeholder">
+            <i class="fas fa-image"></i>
+          </div>
         </div>
+
+        <h2 class="form-title">INICIA SESIÓN</h2>
+
+        <form method="post">
+          {% csrf_token %}
+          {% comment %} {{ form.non_field_errors }} {% endcomment %}
+
+          <!-- Campo de correo electrónico -->
+          <div class="form-group">
+            <div class="input-icon right">
+              <input type="email" class="form-control" id="id_email" name="email" 
+                     placeholder="Correo electrónico" value="{{ form.email.value|default:'' }}" required>
+              <i class="fas fa-envelope icon-right"></i>
+            </div>
+            {% if form.email.errors %}
+              <div class="error-message">{{ form.email.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Campo de contraseña -->
+          <div class="form-group">
+            <div class="input-icon right">
+              <input type="password" class="form-control" id="id_password" name="password" 
+                     placeholder="Contraseña" value="{{ form.password.value|default:'' }}" required>
+              <i class="fas fa-lock icon-right"></i>
+            </div>
+            {% if form.password.errors %}
+              <div class="error-message">{{ form.password.errors }}</div>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-login">
+            <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+          </button>
+        </form>
+
+        <div class="links-container">
+          <a href="{% url 'register' %}"><i class="fas fa-user-plus me-1"></i>Registrarse</a>
+          <span class="divider">•</span>
+          <a href="{% url 'resend_activation' %}"><i class="fas fa-paper-plane me-1"></i>Reenviar activación</a>
+          <span class="divider">•</span>
+          <a href="{% url 'password_reset' %}"><i class="fas fa-key me-1"></i>¿Olvidaste tu contraseña?</a>
+        </div>
+      </div>
     </div>
-  </center>
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</center>
+{% endblock %}
 
 {% comment %} {% extends "base.html" %}
 {% block content %}

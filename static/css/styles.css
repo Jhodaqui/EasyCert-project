@@ -8,7 +8,7 @@
 
 :root {
     --color-primary: #00304D;
-    --color-secondary: #4a6cf7;
+    --color-secondary: #00304D;
     --color-accent: #4ecdc4;
     --color-success: #28a745;
     --color-warning: #ffc107;
@@ -84,13 +84,13 @@ h6 { font-size: 1rem; }
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #3b5bdb 100%);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #00304D 100%);
     color: white;
     box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #3b5bdb 0%, #2d4fc0 100%);
+    background: linear-gradient(135deg, #00304D 0%, #00304D 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(74, 108, 247, 0.4);
     color: white;
@@ -145,7 +145,7 @@ h6 { font-size: 1rem; }
 
 .badge-primary {
     background-color: #e9f5ff;
-    color: #3182ce;
+    color: #00304D;
 }
 
 .badge-warning {
@@ -155,7 +155,7 @@ h6 { font-size: 1rem; }
 
 .badge-success {
     background-color: #e6fffa;
-    color: #319795;
+    color: #00304D;
 }
 
 .badge-danger {
@@ -351,7 +351,7 @@ h6 { font-size: 1rem; }
 }
 
 .roles-table th {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #3b5bdb 100%);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #00304D 100%);
     color: white;
     padding: 15px;
     text-align: left;
@@ -668,7 +668,7 @@ h6 { font-size: 1rem; }
 .user-avatar {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--color-accent) 0%, #3bb5ab 100%);
+    background: linear-gradient(135deg, var(--color-accent) 0%, #00304D 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -879,7 +879,7 @@ h6 { font-size: 1rem; }
 .resend-link {
     display: inline-block;
     padding: 14px 28px;
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #3b5bdb 100%);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, 00304D 100%);
     color: white;
     border: none;
     border-radius: var(--border-radius);
@@ -893,7 +893,7 @@ h6 { font-size: 1rem; }
 }
 
 .resend-link:hover {
-    background: linear-gradient(135deg, #3b5bdb 0%, #2d4fc0 100%);
+    background: linear-gradient(135deg, #00304D 0%, #00304D 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(74, 108, 247, 0.4);
     color: white;
@@ -1002,7 +1002,7 @@ h6 { font-size: 1rem; }
 }
 
 .btn-login {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #3b5bdb 100%);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #00304D 100%);
     border: none;
     padding: 15px;
     font-weight: 600;
@@ -1035,7 +1035,7 @@ h6 { font-size: 1rem; }
 }
 
 .links-container a:hover {
-    color: #3b5bdb;
+    color: #00304D;
     text-decoration: underline;
 }
 
