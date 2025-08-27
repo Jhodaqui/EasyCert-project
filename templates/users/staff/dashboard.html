@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 {% load static %} 
-
-
-<link rel="stylesheet" href="{% static 'css/roles.css' %}">
-
 <div class="dashboard">
   <!-- Header -->
   <div class="header">
@@ -15,7 +11,7 @@
       </div>
     </div>
     <div class="user-info">
-      <span class="welcome-text">Bienvenid@ {{ user.username }}</span>
+      <span class="welcome-text">Bienvenid@ {{ user.nombre_completo }}</span>
       <a href="{% url 'logout' %}" class="logout-btn">
         <i class="fas fa-sign-out-alt"></i>Salir
       </a>
@@ -133,10 +129,6 @@
   </div>
 </div>
 
-
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script>
 // Script para el menú desplegable de filtros
