@@ -201,7 +201,8 @@ h6 { font-size: 1rem; }
 }
 
 .admin-welcome {
-    background: linear-gradient(135deg, #f0f4ff 0%, #e6eeff 100%);
+    border-left: 4px solid var(--color-secondary);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #3e578c 100%);
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 30px;
@@ -1114,25 +1115,19 @@ h6 { font-size: 1rem; }
   outline: none;
 }
 
-.btn-submit, .btn-ingresar {
-  display: block;
-  width: 100%;
-  padding: 11px;
-  border-radius: 20px;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background-color: #00304D; /* azul oscuro */
-  margin-top: 8px;  /* 🔹 menos espacio entre botones */
-  transition: 0.3s;
-  text-decoration: none;
-  text-align: center;
-}
+.btn-submit, .btn-ingresar { display: block; width: 100%; 
+    padding: 11px; border-radius:
+     20px; border: 
+     none; font-size:
+      14px; 
+      font-weight: 600; color: #fff; background-color: #00304D; /* azul oscuro */
+      margin-top: 8px; /* 🔹 menos espacio entre botones */ 
+      transition: 0.3s; 
+      text-decoration: none; 
+      text-align: center; } 
+      .btn-submit:hover, 
+      .btn-ingresar:hover { background-color: #005070; }
 
-.btn-submit:hover, .btn-ingresar:hover {
-  background-color: #005070;
-}
 
 /* Logo arriba a la derecha */
 .constancia-logo {
