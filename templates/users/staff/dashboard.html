@@ -82,7 +82,7 @@
             </div>
             <div class="user-info">
               <h3 class="user-name">{{ s.usuario.nombre_completo }}</h3>
-              <span class="user-document">C.C: {{ s.usuario.documento }}</span>
+              <span class="user-document">{{ s.usuario.tipo_documento}} {{ s.usuario.numero_documento }}</span>
             </div>
             <div class="card-badge {{ s.estado }}">
               {{ s.get_estado_display }}
@@ -102,7 +102,7 @@
             
             <div class="info-row">
               <i class="fas fa-calendar-alt"></i>
-              <span class="info-text">Solicitado: {{ s.fecha_solicitud|date:"d/m/Y" }}</span>
+              <span class="info-text">Solicitado: {{ s.creado_en|date:"d/m/Y" }}</span>
             </div>
           </div>
           

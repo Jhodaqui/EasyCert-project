@@ -199,8 +199,9 @@ def admin_dashboard(request):
 def staff_dashboard(request):
     # Aquí puedes filtrar según permisos/rol
     solicitudes = Constancia.objects.all().order_by("-creado_en")
+    usuario = CustomUser.objects.get(id=request.user.id)
 
-    return render(request, "users/staff/dashboard.html", {"solicitudes": solicitudes})
+    return render(request, "users/staff/dashboard.html", {"solicitudes": solicitudes, "usuario": usuario})
 
 @login_required
 def user_dashboard(request):
