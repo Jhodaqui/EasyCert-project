@@ -24,6 +24,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", lambda r: redirect("login")),
     path("users/", include("users.urls")),
+    path("documents/", include("documents.urls")),
+    path("certificates/", include("certificates.urls")),
 ]
 
 if settings.DEBUG:

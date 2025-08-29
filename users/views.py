@@ -198,16 +198,15 @@ def admin_dashboard(request):
 @login_required
 def staff_dashboard(request):
     # Aquí puedes filtrar según permisos/rol
-    solicitudes = Constancia.objects.all().order_by("-creado_en")
+    solicitudes = Constancia.objects.all().order_by("creado_en")
     usuario = CustomUser.objects.get(id=request.user.id)
 
     return render(request, "users/staff/dashboard.html", {"solicitudes": solicitudes, "usuario": usuario})
 
 @login_required
 def user_dashboard(request):
-    user = request.user  # usuario autenticado
+    user = request.user  
 
-    # Inicializamos el formulario con los datos del usuario
     initial_data = {
         "nombre_completo": user.nombre_completo,
         "numero_documento": user.numero_documento,
@@ -215,34 +214,25 @@ def user_dashboard(request):
         "email": user.email,
     }
 
-    form_valido = False  # bandera para saber si el form pasó las validaciones
-
     if request.method == "POST":
         form = ConstanciaForm(request.POST, initial=initial_data)
         if form.is_valid():
-            # 👉 aquí guardarías la solicitud en BD
-            # print("Solicitud válida:", form.cleaned_data)
-            constancia = Constancia.objects.create(
+            Constancia.objects.create(
                 usuario=user,
                 fecha_inicial=form.cleaned_data["fecha_inicial"],
                 fecha_final=form.cleaned_data["fecha_final"],
-                tipo_constancia=form.cleaned_data["tipo_constancia"],
             )
-            form_valido = True
-            return redirect("user_dashboard") 
-
-            # Marcamos bandera para que la plantilla muestre modal
+            messages.success(request, "Solicitud de constancia enviada correctamente.")
+            return redirect("user_dashboard")
     else:
         form = ConstanciaForm(initial=initial_data)
     
-     # Opcional: mostrar solicitudes pasadas en el mismo dashboard
     solicitudes = Constancia.objects.filter(usuario=user).order_by("-creado_en")
 
     return render(
         request,
         "users/user/dashboard.html",
-        {"form": form, "form_valido": form_valido,
-         "solicitudes": solicitudes}
+        {"form": form, "solicitudes": solicitudes}
     )
 
 # Gestión de roles (solo para admins)
