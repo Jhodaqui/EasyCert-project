@@ -20,11 +20,11 @@
 
   <!-- Contenido -->
   <div class="content">
-    <!-- Barra lateral -->
+    <!-- Barra lateral donde estan los filtros -->
     <div class="sidebar">
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" placeholder="Buscar solicitudes..." class="search-input">
+        <input type="text" placeholder="Buscar solicitudes..." class="search-input" id="searchInput">
       </div>
       
       <div class="filters-section">
@@ -32,7 +32,7 @@
         
         <div class="filter-group">
           <label class="filter-label">Tipo de Constancia</label>
-          <select class="filter-select">
+          <select class="filter-select" id="tipoFilter">
             <option value="">Todos los tipos</option>
             <option value="constancia">Constancia</option>
             <option value="certificado">Certificado</option>
@@ -42,7 +42,7 @@
         
         <div class="filter-group">
           <label class="filter-label">Estado</label>
-          <select class="filter-select">
+          <select class="filter-select" id="estadoFilter">
             <option value="">Todos los estados</option>
             <option value="pendiente">Pendiente</option>
             <option value="aprobado">Aprobado</option>
@@ -52,7 +52,7 @@
         
         <div class="filter-group">
           <label class="filter-label">Fecha</label>
-          <select class="filter-select">
+          <select class="filter-select" id="fechaFilter">
             <option value="">Todas las fechas</option>
             <option value="hoy">Hoy</option>
             <option value="semana">Esta semana</option>
@@ -60,66 +60,65 @@
           </select>
         </div>
         
-        <button class="apply-filters-btn">
+        <button class="apply-filters-btn" id="applyFilters">
           <i class="fas fa-filter"></i>Aplicar Filtros
         </button>
       </div>
     </div>
-
-    <!-- Listado de solicitudes -->
+    
+    <!-- Listado de solicitudes en tabla -->
+     <div style="width: 1200px; height: 520px; overflow: auto;">
     <div class="solicitudes">
       <div class="solicitudes-header">
         <h2>Solicitudes de Constancias</h2>
         <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
       </div>
-      
+
       <div class="table-container">
-        {% for s in solicitudes %}
-        <div class="certificate-card">
-          <div class="card-header">
-            <div class="user-avatar">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="user-info">
-              <h3 class="user-name">{{ s.usuario.nombre_completo }}</h3>
-              <span class="user-document">{{ s.usuario.tipo_documento}} {{ s.usuario.numero_documento }}</span>
-            </div>
-            <div class="card-badge {{ s.estado }}">
-              {{ s.get_estado_display }}
-            </div>
-          </div>
-          
-          <div class="card-body">
-            <div class="info-row">
-              <i class="fas fa-envelope"></i>
-              <span class="info-text">{{ s.usuario.email }}</span>
-            </div>
-            
-              <div class="info-row">
-              <i class="fas fa-calendar-alt"></i>
-              <span class="info-text">Solicitado: {{ s.creado_en|date:"d/m/Y" }}</span>
-            </div>
-          </div>
-          
-          <div class="card-footer">
-            <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-generar">
-              <i class="fas fa-upload"></i> Subir PDF
-            </a>
-            <a href="{% url 'certificates:manual_fields' s.id %}" class="btn-details">
-              <i class="fas fa-edit"></i> Completar datos manuales
-            </a>
-            <a href="{% url 'certificates:generar_constancia' s.id %}" class="btn-generar">
-              <i class="fas fa-download"></i> Generar Constancia
-            </a>
-          </div>
-        </div>
-        {% empty %}
-        <div class="empty-state">
-          <i class="fas fa-folder-open"></i>
-          <h3>No hay solicitudes</h3>
-          <p>No se encontraron solicitudes de constancias.</p>
-        </div>
-        {% endfor %}
+        <table class="solicitudes-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Documento</th>
+              <th>Email</th>
+              <th>Fecha Solicitud</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in solicitudes %}
+            <tr class="solicitud-row" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+              <td>{{ s.usuario.nombre_completo }}</td>
+              <td>{{ s.usuario.tipo_documento }} {{ s.usuario.numero_documento }}</td>
+              <td>{{ s.usuario.email }}</td>
+              <td>{{ s.creado_en|date:"d/m/Y" }}</td>
+              <td>
+                <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
+              </td>
+              <td class="action-buttons">
+                <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
+                  <i class="fas fa-upload"></i>
+                </a>
+                <a href="{% url 'certificates:manual_fields' s.id %}" class="btn-action" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'certificates:generar_constancia' s.id %}" class="btn-action" title="Descargar">
+                  <i class="fas fa-download"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <h3>No hay solicitudes</h3>
+                <p>No se encontraron solicitudes de constancias.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -127,26 +126,95 @@
 
 
 <script>
-// Script para el menú desplegable de filtros
 document.addEventListener('DOMContentLoaded', function() {
   const filterSelects = document.querySelectorAll('.filter-select');
+  const searchInput = document.getElementById('searchInput');
+  const applyBtn = document.getElementById('applyFilters');
+  const rows = document.querySelectorAll('.solicitud-row');
   
+  // Cambiar estilo al seleccionar filtro
   filterSelects.forEach(select => {
     select.addEventListener('change', function() {
       this.style.backgroundColor = this.value ? '#f8f9fa' : 'white';
     });
   });
   
-  // Aplicar filtros
-  const applyBtn = document.querySelector('.apply-filters-btn');
+  // Función para aplicar filtros
+  function aplicarFiltros() {
+    const tipoValue = document.getElementById('tipoFilter').value;
+    const estadoValue = document.getElementById('estadoFilter').value;
+    const fechaValue = document.getElementById('fechaFilter').value;
+    const searchValue = searchInput.value.toLowerCase();
+    
+    // Obtener fecha actual para comparaciones
+    const hoy = new Date();
+    
+    rows.forEach(row => {
+      let mostrar = true;
+      const tipo = row.getAttribute('data-tipo');
+      const estado = row.getAttribute('data-estado');
+      const fechaStr = row.getAttribute('data-fecha');
+      const fecha = new Date(fechaStr);
+      const textoFila = row.textContent.toLowerCase();
+      
+      // Aplicar filtros
+      if (tipoValue && tipo !== tipoValue) {
+        mostrar = false;
+      }
+      
+      if (estadoValue && estado !== estadoValue) {
+        mostrar = false;
+      }
+      
+      if (fechaValue === 'hoy') {
+        const esHoy = fecha.getDate() === hoy.getDate() && 
+                      fecha.getMonth() === hoy.getMonth() && 
+                      fecha.getFullYear() === hoy.getFullYear();
+        if (!esHoy) mostrar = false;
+      } else if (fechaValue === 'semana') {
+        const inicioSemana = new Date(hoy);
+        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+        if (fecha < inicioSemana) mostrar = false;
+      } else if (fechaValue === 'mes') {
+        if (fecha.getMonth() !== hoy.getMonth() || fecha.getFullYear() !== hoy.getFullYear()) {
+          mostrar = false;
+        }
+      }
+      
+      // Aplicar búsqueda
+      if (searchValue && !textoFila.includes(searchValue)) {
+        mostrar = false;
+      }
+      
+      // Mostrar u ocultar fila
+      row.style.display = mostrar ? '' : 'none';
+    });
+    
+    // Actualizar contador
+    const filasVisibles = document.querySelectorAll('.solicitud-row:not([style*="display: none"])');
+    document.querySelector('.badge-count').textContent = `${filasVisibles.length} solicitudes`;
+  }
+  
+  // Eventos para aplicar filtros
   applyBtn.addEventListener('click', function() {
     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Aplicando...';
+    
     setTimeout(() => {
+      aplicarFiltros();
       this.innerHTML = '<i class="fas fa-check"></i>Filtros Aplicados';
+      
       setTimeout(() => {
         this.innerHTML = '<i class="fas fa-filter"></i>Aplicar Filtros';
       }, 2000);
-    }, 1000);
+    }, 500);
+  });
+  
+  // Búsqueda en tiempo real
+  searchInput.addEventListener('input', aplicarFiltros);
+  
+  // Aplicar filtros al cambiar selects
+  filterSelects.forEach(select => {
+    select.addEventListener('change', aplicarFiltros);
   });
 });
 </script>
