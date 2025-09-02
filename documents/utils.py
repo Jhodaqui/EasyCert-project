@@ -1,26 +1,63 @@
 import pdfplumber
+import PyPDF2
+import re
 
-def extract_tables_from_pdf(pdf_file):
+
+# def extract_tables_from_pdf(pdf_file):
+#     """Lee todo el PDF y devuelve un vector con cada línea como item"""
+#     data = []
+#     pdf_reader = PyPDF2.PdfReader(pdf_file)
+#     text = ""
+#     for page in pdf_reader.pages:
+#         text += page.extract_text() + "\n"
+
+#     # cada línea del PDF será un diccionario clave-valor genérico
+#     for i, line in enumerate(text.split("\n")):
+#         if line.strip():  # ignoramos líneas vacías
+#             data.append({
+#                 "clave": f"linea_{i+1}",
+#                 "valor": line.strip()
+#             })
+
+#     return data
+
+def extract_sections_from_pdf(pdf_file):
     """
-    Procesa el PDF y devuelve lista de diccionarios con clave → valor
+    Extrae secciones numeradas (1., 2., 3. o 1°, 2°, etc.)
+    y devuelve lista de dict con clave = numero y valor = texto del bloque
     """
-    extracted = []
+    pdf_reader = PyPDF2.PdfReader(pdf_file)
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text() + "\n"
 
-    with pdfplumber.open(pdf_file) as pdf:
-        for page in pdf.pages:
-            # Tablas
-            tables = page.extract_tables()
-            for table in tables:
-                for row in table:
-                    if row and len(row) >= 2:
-                        clave = str(row[0]).strip()
-                        valor = str(row[1]).strip()
-                        extracted.append({"clave": clave, "valor": valor})
+    # vector para guardar bloques
+    data = []
+    current_section = None
 
-            # Texto línea a línea (opcional)
-            text = page.extract_text()
-            if text:
-                for i, line in enumerate(text.split("\n")):
-                    extracted.append({"clave": f"Línea {i+1}", "valor": line.strip()})
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
 
-    return extracted
+        # detectar inicio de sección (ejemplo: "1.", "2.", "3.", "1°", "2°")
+        match = re.match(r"^(\d+[\.\°])\s*(.*)", line)
+        if match:
+            # si ya había una sección previa, guardarla
+            if current_section:
+                data.append(current_section)
+
+            # iniciar nueva sección
+            num = match.group(1)
+            contenido = match.group(2)
+            current_section = {"clave": num, "valor": contenido}
+        else:
+            # si estamos dentro de una sección, concatenar el texto
+            if current_section:
+                current_section["valor"] += " " + line
+
+    # agregar la última sección si quedó abierta
+    if current_section:
+        data.append(current_section)
+
+    return data

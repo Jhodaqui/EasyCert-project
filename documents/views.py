@@ -2,31 +2,53 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import TempExtractedData, UserContractData
-from .utils import extract_tables_from_pdf
+from .utils import extract_sections_from_pdf # extract_tables_from_pdf
 from users.models import CustomUser
 
 # Create your views here.
 
 @login_required
+# def upload_pdf_view(request, user_id):
+#     usuario = get_object_or_404(CustomUser, id=user_id)
+
+#     if request.method == "POST" and request.FILES.get("pdf_file"):
+#         pdf = request.FILES["pdf_file"]
+#         data = extract_tables_from_pdf(pdf)
+
+#         # Limpiar datos anteriores
+#         TempExtractedData.objects.filter(usuario=usuario).delete()
+
+#         # Guardar cada línea extraída
+#         for item in data:
+#             TempExtractedData.objects.create(
+#                 usuario=usuario,
+#                 clave=item["clave"],  # ej: linea_1, linea_2, etc.
+#                 valor=item["valor"]   # el texto de esa línea
+#             )
+
+#         messages.success(request, " PDF procesado, selecciona los datos a guardar.")
+#         return redirect("documents:select_data", user_id=usuario.id)
+
+#     return render(request, "documents/upload_pdf.html", {"usuario": usuario})
 def upload_pdf_view(request, user_id):
     usuario = get_object_or_404(CustomUser, id=user_id)
 
     if request.method == "POST" and request.FILES.get("pdf_file"):
         pdf = request.FILES["pdf_file"]
-        data = extract_tables_from_pdf(pdf)
+        data = extract_sections_from_pdf(pdf)
 
         # Limpiar datos anteriores
         TempExtractedData.objects.filter(usuario=usuario).delete()
 
-        # Guardar extraídos
+        # Guardar secciones extraídas
         for item in data:
             TempExtractedData.objects.create(
                 usuario=usuario,
-                clave=item["clave"],
-                valor=item["valor"]
+                clave=item["clave"],  # ej: "1.", "2°"
+                valor=item["valor"]   # todo el texto del bloque
             )
 
-        messages.success(request, "✅ PDF procesado, selecciona los datos a guardar.")
+        messages.success(request, "✅ PDF procesado por secciones.")
         return redirect("documents:select_data", user_id=usuario.id)
 
     return render(request, "documents/upload_pdf.html", {"usuario": usuario})

@@ -73,7 +73,7 @@
         <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
       </div>
       
-      <div class="cards-container">
+      <div class="table-container">
         {% for s in solicitudes %}
         <div class="certificate-card">
           <div class="card-header">
@@ -95,12 +95,7 @@
               <span class="info-text">{{ s.usuario.email }}</span>
             </div>
             
-            {% comment %} <div class="info-row">
-              <i class="fas fa-file-alt"></i>
-              <span class="info-text">{{ s.get_tipo_constancia_display }}</span>
-            </div> {% endcomment %}
-            
-            <div class="info-row">
+              <div class="info-row">
               <i class="fas fa-calendar-alt"></i>
               <span class="info-text">Solicitado: {{ s.creado_en|date:"d/m/Y" }}</span>
             </div>
