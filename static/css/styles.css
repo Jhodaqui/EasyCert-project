@@ -796,7 +796,7 @@ h6 { font-size: 1rem; }
     margin: 100px auto;
     max-width: 450px;
     width: 100%;
-    padding: 40px;
+    padding: 50px;
     background-color: white;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
@@ -939,7 +939,7 @@ h6 { font-size: 1rem; }
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(23, 0, 230, 0.15);
-    max-width: 500px;
+    max-width: 400px;
     text-align: center;
     width: 100%;
 }
