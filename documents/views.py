@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import TempExtractedData, UserContractData
-from .utils import extract_sections_from_pdf # extract_tables_from_pdf
+from .utils import extract_key_value_from_pdf # extract_tables_from_pdf
 from users.models import CustomUser
 
 # Create your views here.
@@ -35,7 +35,7 @@ def upload_pdf_view(request, user_id):
 
     if request.method == "POST" and request.FILES.get("pdf_file"):
         pdf = request.FILES["pdf_file"]
-        data = extract_sections_from_pdf(pdf)
+        data = extract_key_value_from_pdf(pdf)
 
         # Limpiar datos anteriores
         TempExtractedData.objects.filter(usuario=usuario).delete()
@@ -61,6 +61,8 @@ def select_data_view(request, user_id):
 
     if request.method == "POST":
         seleccionados = request.POST.getlist("selected")
+        numero_contrato = request.POST.get("numero_contrato")  # manual
+        contratista = request.POST.get("contratista")  # manual
 
         for item in temp_data:
             if str(item.id) in seleccionados:
@@ -70,8 +72,22 @@ def select_data_view(request, user_id):
                     defaults={"valor": item.valor}
                 )
 
+        # Guardar manuales directamente en la tabla final
+        if numero_contrato:
+            UserContractData.objects.update_or_create(
+                usuario=usuario, campo="Número de Contrato", defaults={"valor": numero_contrato}
+            )
+        if contratista:
+            UserContractData.objects.update_or_create(
+                usuario=usuario, campo="Contratista", defaults={"valor": contratista}
+            )
+
         temp_data.delete()
-        messages.success(request, "Datos guardados. Ahora llena los campos manuales.")
+        messages.success(request, "Datos guardados en la tabla final con los campos manuales incluidos.")
         return redirect("certificates:manual_fields", user_id=usuario.id)
 
-    return render(request, "documents/select_data.html", {"temp_data": temp_data, "usuario": usuario})
+    return render(
+        request,
+        "documents/select_data.html",
+        {"temp_data": temp_data, "usuario": usuario}
+    )

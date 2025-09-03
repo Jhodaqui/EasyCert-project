@@ -43,18 +43,3 @@ class UserContractData(models.Model):
 
     def __str__(self):
         return f"{self.usuario.email} - {self.campo}"
-
-class Certificado(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="certificados_documentos")
-    numero = models.PositiveIntegerField(unique=True)  # autoincremental
-    archivo = models.FileField(upload_to="certificados/", blank=True, null=True)
-    creado_en = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-creado_en"]
-
-    def __str__(self):
-        return f"Certificación N° {self.numero:03d} - {self.usuario.nombre_completo}"
-
-    def numero_formateado(self):
-        return f"{self.numero:03d}"  # Ejemplo: 001, 002, 003

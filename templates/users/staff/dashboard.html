@@ -100,10 +100,10 @@
                 <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
                   <i class="fas fa-upload"></i>
                 </a>
-                <a href="{% url 'certificates:manual_fields' s.id %}" class="btn-action" title="Editar">
+                <a href="{% url 'certificates:manual_fields' s.usuario.id %}" class="btn-action" title="Editar">
                   <i class="fas fa-edit"></i>
                 </a>
-                <a href="{% url 'certificates:generar_constancia' s.id %}" class="btn-action" title="Descargar">
+                <a href="{% url 'certificates:generar_constancia' s.usuario.id %}" class="btn-action" title="Descargar">
                   <i class="fas fa-download"></i>
                 </a>
               </td>
