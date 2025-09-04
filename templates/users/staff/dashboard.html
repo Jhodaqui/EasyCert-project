@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="user-info">
-      <span class="welcome-text">Bienvenid@ {{ user.nombre_completo }}</span>
+      <span class="welcome-text">Bienvenid@ {{ user.nombres }}</span>
       <a href="{% url 'logout' %}" class="logout-btn">
         <i class="fas fa-sign-out-alt"></i>Salir
       </a>
@@ -89,7 +89,7 @@
           <tbody>
             {% for s in solicitudes %}
             <tr class="solicitud-row" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
-              <td>{{ s.usuario.nombre_completo }}</td>
+              <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
               <td>{{ s.usuario.tipo_documento }} {{ s.usuario.numero_documento }}</td>
               <td>{{ s.usuario.email }}</td>
               <td>{{ s.creado_en|date:"d/m/Y" }}</td>

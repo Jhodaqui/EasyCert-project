@@ -3,48 +3,67 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.core.files.storage import default_storage
 from .models import CustomUser, TIPOS_DOCUMENTO, Constancia
-from .validators import validate_pdf
 from datetime import date
 
-ALLOWED_EMAIL_DOMAINS = {"gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"}
+# Dominios permitidos
+ALLOWED_EMAIL_DOMAINS = {
+    "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "sena.edu.co"
+}
+
 
 class RegisterForm(forms.ModelForm):
-    password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=True)
-    password2 = forms.CharField(label="Confirmar contraseña", widget=forms.PasswordInput, required=True)
-
-    nombre_completo = forms.CharField(
-        max_length=150,
-        validators=[RegexValidator(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', "Solo letras y espacios")],
-        label="Nombre completo"
+    password1 = forms.CharField(
+        label="Contraseña",
+        widget=forms.PasswordInput,
+        required=True,
+        min_length=5
     )
-    tipo_documento = forms.ChoiceField(choices=TIPOS_DOCUMENTO, label="Tipo de documento")
+    password2 = forms.CharField(
+        label="Confirmar contraseña",
+        widget=forms.PasswordInput,
+        required=True
+    )
+
+    # Campos personalizados
+    nombres = forms.CharField(
+        max_length=100,
+        validators=[RegexValidator(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', "Solo letras y espacios")],
+        label="Nombres"
+    )
+    apellidos = forms.CharField(
+        max_length=100,
+        validators=[RegexValidator(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', "Solo letras y espacios")],
+        label="Apellidos"
+    )
+    tipo_documento = forms.ChoiceField(
+        choices=TIPOS_DOCUMENTO,
+        label="Tipo de documento"
+    )
     numero_documento = forms.CharField(
         max_length=15,
         validators=[RegexValidator(r'^\d{1,15}$', "Solo números, máximo 15 dígitos")],
         label="Número de documento"
     )
     email = forms.EmailField(label="Correo electrónico")
-    documento_pdf = forms.FileField(label="Documento (PDF)", required=True)
 
     class Meta:
         model = CustomUser
-        fields = ["nombre_completo", "tipo_documento", "numero_documento", "email", "documento_pdf"]
+        fields = ["nombres", "apellidos", "tipo_documento", "numero_documento", "email"]
 
+    # Validación de correo
     def clean_email(self):
-        email = self.cleaned_data.get("email").lower()
+        email = self.cleaned_data.get("email", "").lower()
         domain = email.split("@")[-1]
+
         if domain not in ALLOWED_EMAIL_DOMAINS:
-            raise ValidationError("El correo debe ser de un dominio válido (gmail, outlook, hotmail, etc.)")
+            raise ValidationError(
+                "El correo debe ser de un dominio válido: Gmail, Outlook, Hotmail, sena.edu.co, etc."
+            )
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError("Este correo ya está registrado.")
         return email
 
-    def clean_documento_pdf(self):
-        f = self.cleaned_data.get("documento_pdf")
-        if f:
-            validate_pdf(f)
-        return f
-
+    # Validación de contraseñas
     def clean(self):
         cleaned = super().clean()
         p1 = cleaned.get("password1")
@@ -53,28 +72,25 @@ class RegisterForm(forms.ModelForm):
             raise ValidationError("Las contraseñas no coinciden.")
         return cleaned
 
+    # Guardar usuario
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.nombre_completo = self.cleaned_data["nombre_completo"]
+        user.nombres = self.cleaned_data["nombres"]
+        user.apellidos = self.cleaned_data["apellidos"]
         user.tipo_documento = self.cleaned_data["tipo_documento"]
         user.numero_documento = self.cleaned_data["numero_documento"]
         user.email = self.cleaned_data["email"].lower()
         user.set_password(self.cleaned_data["password1"])
 
-        uploaded_file = self.cleaned_data.get("documento_pdf")
-        if uploaded_file:
-            folder = f"documents/{user.numero_documento}"
-            target_name = f"{user.numero_documento}.pdf"
-            target_path = f"{folder}/{target_name}"
-            # eliminar existente para forzar overwrite
-            if default_storage.exists(target_path):
-                default_storage.delete(target_path)
-            user.documento_pdf = uploaded_file
-
         if commit:
             user.save()
         return user
 
+class BulkUploadForm(forms.Form):
+    file = forms.FileField(
+        label="Archivo de usuarios (CSV o Excel)",
+        help_text="Sube un archivo con columnas: nombres, apellidos, tipo_documento, numero_documento, email, password"
+    )
 
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Correo electrónico")
