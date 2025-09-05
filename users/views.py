@@ -8,8 +8,12 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 
-from .forms import RegisterForm, LoginForm, ConstanciaForm, Constancia
+from .forms import RegisterForm, LoginForm, ConstanciaForm, Constancia, BulkUploadForm
+import io
+import csv
+import pandas as pd
 from .models import CustomUser
 
 # Create your views here.
@@ -17,74 +21,18 @@ from .models import CustomUser
 # Registro
 def register_view(request):
     if request.method == "POST":
-        form = RegisterForm(request.POST, request.FILES)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False
-            if request.FILES.get("documento_pdf"):
-                user.documento_pdf = request.FILES["documento_pdf"]
+            user.is_active = True  # Ya no requiere activación
             user.save()
-
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            activation_link = request.build_absolute_uri(f"/users/activate/{uid}/{token}/")
-
-            subject = "Activa tu cuenta EasyCert"
-            message = render_to_string("users/emails/activation_email.txt", {"user": user, "activation_link": activation_link})
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-
-            messages.success(request, "Registro realizado. Revisa tu correo para activar la cuenta.")
+            messages.success(request, "Usuario registrado con éxito. Ya puedes iniciar sesión.")
             return redirect("login")
         else:
             messages.error(request, "Corrige los errores del formulario.")
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
-
-
-# Activación
-def activate_account(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = CustomUser.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        user = None
-
-    if user is not None and default_token_generator.check_token(user, token):
-        if not user.is_active:
-            user.is_active = True
-            user.save()
-            messages.success(request, "Cuenta activada. Ahora puedes iniciar sesión.")
-        else:
-            messages.info(request, "Tu cuenta ya estaba activada.")
-        return redirect("login")
-    else:
-        messages.error(request, "El enlace de activación no es válido o ha expirado.")
-        return render(request, "users/activation_invalid.html")
-
-
-# Reenviar activación
-def resend_activation(request):
-    if request.method == "POST":
-        email = request.POST.get("email", "").lower()
-        try:
-            user = CustomUser.objects.get(email=email)
-            if user.is_active:
-                messages.warning(request, "La cuenta ya está activa. No se reenviará activación.")
-                return redirect("login")
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            activation_link = request.build_absolute_uri(f"/users/activate/{uid}/{token}/")
-            subject = "Reenvío: activa tu cuenta EasyCert"
-            message = render_to_string("users/emails/activation_email.txt", {"user": user, "activation_link": activation_link})
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-            messages.success(request, "Correo de activación reenviado. Revisa tu bandeja.")
-            return redirect("login")
-        except CustomUser.DoesNotExist:
-            messages.error(request, "No existe cuenta con ese correo.")
-    return render(request, "users/resend_activation.html")
-
-
 
 # Login
 def login_view(request):
@@ -100,7 +48,7 @@ def login_view(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    messages.success(request, f"Bienvenido {user.nombre_completo}")
+                    
 
                     # Redirección según rol
                     if user.role == "admin":
@@ -195,6 +143,62 @@ def password_reset_confirm_view(request, uidb64, token):
 def admin_dashboard(request):
     return render(request, "users/admin/dashboard.html")
 
+def users_bulk_upload(request):
+    if request.method == "POST":
+        form = BulkUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES["file"]
+            file_name = file.name.lower()
+
+            try:
+                # 📌 Si es CSV
+                if file_name.endswith(".csv"):
+                    decoded_file = file.read().decode("utf-8")
+                    io_string = io.StringIO(decoded_file)
+                    reader = csv.DictReader(io_string)
+                    rows = list(reader)
+
+                # 📌 Si es Excel
+                elif file_name.endswith(".xls") or file_name.endswith(".xlsx"):
+                    df = pd.read_excel(file)
+                    rows = df.to_dict(orient="records")
+
+                else:
+                    messages.error(request, "Formato de archivo no soportado. Solo se permite CSV o Excel.")
+                    return redirect("users_bulk_upload")
+
+                # Procesamos cada fila
+                for row in rows:
+                    data = {
+                        "nombres": row.get("nombres"),
+                        "apellidos": row.get("apellidos"),
+                        "tipo_documento": row.get("tipo_documento"),
+                        "numero_documento": row.get("numero_documento"),
+                        "email": row.get("email"),
+                        "password1": row.get("password") or "12345",  # por defecto si no viene
+                        "password2": row.get("password") or "12345",
+                    }
+
+                    user_form = RegisterForm(data)
+                    if user_form.is_valid():
+                        user_form.save()
+                    else:
+                        messages.error(request, f"Error en {row.get('email')}: {user_form.errors}")
+
+                messages.success(request, "Usuarios cargados correctamente.")
+                return redirect("users_bulk_upload")
+
+            except Exception as e:
+                messages.error(request, f"Ocurrió un error procesando el archivo: {str(e)}")
+                return redirect("users_bulk_upload")
+
+    else:
+        form = BulkUploadForm()
+
+    User = get_user_model()
+    users = User.objects.exclude(role="admin")  # Evitar mostrar admins
+    return render(request, "users/admin/users_bulk_upload.html", {"form": form, "users": users})
+
 @login_required
 def staff_dashboard(request):
     # Aquí puedes filtrar según permisos/rol
@@ -208,7 +212,7 @@ def user_dashboard(request):
     user = request.user  
 
     initial_data = {
-        "nombre_completo": user.nombre_completo,
+        "nombre_completo": user.nombres + " " + user.apellidos,
         "numero_documento": user.numero_documento,
         "tipo_documento": user.tipo_documento,
         "email": user.email,

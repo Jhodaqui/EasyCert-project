@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="mb-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Subir</button>
+</form>
+
+<div class="alert alert-info">
+    <strong>Consejo:</strong> El archivo debe tener las columnas en este orden:
+    <code>nombres</code>, <code>apellidos</code>, <code>tipo_documento</code>,
+    <code>numero_documento</code>, <code>email</code>, <code>password</code>.
+    <br>
+    Ejemplo de CSV:
+    <pre>
+nombres,apellidos,tipo_documento,numero_documento,email,password
+Juan,Pérez,CC,12345678,juan.perez@sena.edu.co,clave123
+María,Gómez,TI,98765432,maria.gomez@sena.edu.co,clave456
+    </pre>
+</div>
+
+<hr>
+
+<h3>Usuarios existentes</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Documento</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.email }}</td>
+            <td>{{ user.nombres }}</td>
+            <td>{{ user.apellidos }}</td>
+            <td>{{ user.tipo_documento }} {{ user.numero_documento }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No hay usuarios</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

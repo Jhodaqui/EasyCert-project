@@ -84,7 +84,10 @@ def generar_constancia_view(request, user_id):
             last_num = Certificado.objects.aggregate(max_num=Max("numero"))["max_num"] or 0
             next_num = last_num + 1
 
-            cert = Certificado.objects.create(usuario=usuario, numero=next_num)
+            cert, created = Certificado.objects.get_or_create(
+                usuario=usuario,
+                defaults={"numero": next_num}
+            )
 
             # Contexto para el Word
             context = {

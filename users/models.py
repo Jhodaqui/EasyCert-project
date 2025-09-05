@@ -12,28 +12,13 @@ TIPOS_DOCUMENTO = [
     ('PA', 'Pasaporte'),
 ]
 
-def user_document_upload_path(instance, filename):
-    """
-    Ruta: media/documents/<numero_documento>/<numero_documento>.pdf
-    Forzamos .pdf; instance.numero_documento debe estar asignado antes de guardar.
-    """
-    ext = '.pdf'
-    num = str(instance.numero_documento)
-    num = "".join(ch for ch in num if ch.isalnum())
-    filename = f"{num}{ext}"
-    return os.path.join("documents", num, filename)
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("El usuario debe tener un correo electrónico")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        if password:
-            user.set_password(password)
-        else:
-            user.set_unusable_password()
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -41,8 +26,6 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
-        if not password:
-            raise ValueError("Superuser debe tener contraseña")
         return self.create_user(email, password, **extra_fields)
 
 
@@ -53,27 +36,31 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ("user", "Usuario"),
     )
 
-    # Campos básicos
-    nombre_completo = models.CharField("Nombres completos", max_length=150)
+    # Nuevos campos
+    nombres = models.CharField("Nombres", max_length=100)
+    apellidos = models.CharField("Apellidos", max_length=100)
     tipo_documento = models.CharField("Tipo de documento", max_length=10, choices=TIPOS_DOCUMENTO)
     numero_documento = models.CharField("Número de documento", max_length=15, unique=True)
     email = models.EmailField("Correo electrónico", unique=True)
-    documento_pdf = models.FileField("Copia documento (PDF)", upload_to=user_document_upload_path, null=True, blank=True)
 
     # Roles
     role = models.CharField("Rol de usuario", max_length=20, choices=ROLE_CHOICES, default="user")
 
     # Estado
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)  # <-- Ahora siempre activo por defecto
     is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["nombre_completo", "tipo_documento", "numero_documento"]
+    REQUIRED_FIELDS = ["nombres", "apellidos", "tipo_documento", "numero_documento"]
 
     def __str__(self):
-        return f"{self.nombre_completo} ({self.numero_documento})"
+        return f"{self.nombres} {self.apellidos} ({self.numero_documento})"
+
+    def get_tipo_documento_display_full(self):
+        """Devuelve el texto completo del tipo de documento"""
+        return dict(TIPOS_DOCUMENTO).get(self.tipo_documento, self.tipo_documento)
     
 class Constancia(models.Model):
     ESTADOS = [

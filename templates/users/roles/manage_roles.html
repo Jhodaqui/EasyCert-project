@@ -15,15 +15,15 @@
             <div class="stat-label">Usuarios totales</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ admin_count }}</div>
+            <div class="stat-number">{{ users.is_superuser|length }}</div>
             <div class="stat-label">Administradores</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ staff_count }}</div>
+            <div class="stat-number">{{ users.roles.staff|length }}</div>
             <div class="stat-label">Staff</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ user_count }}</div>
+            <div class="stat-number">{{ users.roles.user|length }}</div>
             <div class="stat-label">Usuarios</div>
         </div>
     </div>

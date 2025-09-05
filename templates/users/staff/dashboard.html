@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="user-info">
-      <span class="welcome-text">Bienvenid@ {{ user.nombre_completo }}</span>
+      <span class="welcome-text">Bienvenid@ {{ user.nombres }}</span>
       <a href="{% url 'logout' %}" class="logout-btn">
         <i class="fas fa-sign-out-alt"></i>Salir
       </a>
@@ -89,7 +89,7 @@
           <tbody>
             {% for s in solicitudes %}
             <tr class="solicitud-row" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
-              <td>{{ s.usuario.nombre_completo }}</td>
+              <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
               <td>{{ s.usuario.tipo_documento }} {{ s.usuario.numero_documento }}</td>
               <td>{{ s.usuario.email }}</td>
               <td>{{ s.creado_en|date:"d/m/Y" }}</td>
@@ -97,15 +97,26 @@
                 <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
               </td>
               <td class="action-buttons">
-                <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
+                {% comment %} <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
                   <i class="fas fa-upload"></i>
+                </a> {% endcomment %}
+                <button type="button" class="btn-action open-contrato-modal" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
+                <i class="fas fa-file-pdf"></i>
+                </button>
+                <a href="#" 
+                  class="btn-action ver-contratos" 
+                  data-user="{{ s.usuario.id }}" 
+                  data-bs-toggle="modal" 
+                  data-bs-target="#contratosModal"
+                  title="Ver contratos">
+                  <i class="fas fa-file-contract"></i>
                 </a>
-                <a href="{% url 'certificates:manual_fields' s.usuario.id %}" class="btn-action" title="Editar">
+                {% comment %} <a href="{% url 'certificates:manual_fields' s.usuario.id %}" class="btn-action" title="Editar">
                   <i class="fas fa-edit"></i>
                 </a>
                 <a href="{% url 'certificates:generar_constancia' s.usuario.id %}" class="btn-action" title="Descargar">
                   <i class="fas fa-download"></i>
-                </a>
+                </a> {% endcomment %}
               </td>
             </tr>
             {% empty %}
@@ -124,7 +135,221 @@
   </div>
 </div>
 
+{% comment %} modal subir datos {% endcomment %}
+<!-- Modal -->
+<div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" 
+     data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="contratoModalForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="usuario_id" id="modal_usuario_id">
 
+        <div class="modal-header">
+          <h5 class="modal-title">Crear / Subir Contrato</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div id="modalAlerts" style="display:none;">
+            <div class="alert alert-danger" id="modalErrors"></div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label>PDF del contrato</label>
+              <input type="file" name="archivo" id="id_archivo" accept="application/pdf" class="form-control">
+              <div class="form-text">Sube el PDF. Se extraerá: Objeto, Obligaciones, valor de pago y Plazo.</div>
+            </div>
+            <div class="col-md-6">
+              <label>Número de contrato</label>
+              <input type="text" name="numero_contrato" id="id_numero_contrato" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label>Fecha generación</label>
+              <input type="date" name="fecha_generacion" id="id_fecha_generacion" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label>Fecha inicio</label>
+              <input type="date" name="fecha_inicio" id="id_fecha_inicio" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label>Valor de pago</label>
+              <input type="text" name="valor_pago" id="id_valor_pago" class="form-control" placeholder="$...">
+              <small class="form-text">Si se detecta automáticamente, se mostrará; puedes ajustar aquí.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" id="guardarOtroBtn" class="btn btn-success" style="display:none;">Guardar y cargar otro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% comment %} cuando se carga el PDF {% endcomment %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const fileInput = document.getElementById("id_archivo");
+
+  fileInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("archivo", file);
+
+    fetch("{% url 'documents:prefill_contrato' %}", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          const m = data.metadata;
+          // autocompletar campos
+          if (m.valor_pago) document.getElementById("id_valor_pago").value = m.valor_pago;
+        } else {
+          alert("⚠️ No se pudo procesar el PDF: " + data.error);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("⚠️ Error al enviar PDF para prellenar.");
+      });
+  });
+});
+</script>
+<script>
+(function(){
+  const modalEl = document.getElementById('contratoModal');
+  const form = document.getElementById('contratoModalForm');
+  const modalErrors = document.getElementById('modalErrors');
+  const modalAlerts = document.getElementById('modalAlerts');
+  const guardarOtroBtn = document.getElementById('guardarOtroBtn');
+
+  function getCSRF(){
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+  }
+
+  // Abrir modal y setear usuario
+  document.querySelectorAll('.open-contrato-modal').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const userId = this.dataset.userId;
+      document.getElementById('modal_usuario_id').value = userId;
+      // resetear form
+      form.reset();
+      modalAlerts.style.display = 'none';
+      guardarOtroBtn.style.display = 'none';
+      // mostrar modal (Bootstrap 5)
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    });
+  });
+
+  function showErrors(errs){
+    modalErrors.innerHTML = '';
+    for(const k in errs){
+      const msgs = errs[k];
+      if(Array.isArray(msgs)){
+        msgs.forEach(m => { modalErrors.innerHTML += `<div>${k}: ${m}</div>`; });
+      } else {
+        modalErrors.innerHTML += `<div>${k}: ${msgs}</div>`;
+      }
+    }
+    modalAlerts.style.display = 'block';
+  }
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    modalAlerts.style.display = 'none';
+    modalErrors.innerHTML = '';
+
+    const fd = new FormData(form);
+    const url = "{% url 'documents:contrato_create_modal' %}";
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRF() },
+      body: fd
+    });
+
+    const data = await res.json();
+    if(!res.ok || !data.ok){
+      showErrors(data.errors || data);
+      return;
+    }
+
+    // actualizar tabla (asumiendo que hay un contenedor con id 'contratosTable' o reemplazar manualmente)
+    // Si la plantilla no tiene un div específico, puedes forzar recarga de la página en lugar de inyectar HTML.
+    const tableContainer = document.getElementById('contratosTable');
+    if(tableContainer && data.table_html){
+      tableContainer.innerHTML = data.table_html;
+    } else {
+      // fallback: recargar la página para ver cambios
+      window.location.reload();
+    }
+
+    // mostrar "guardar y cargar otro"
+    guardarOtroBtn.style.display = 'inline-block';
+    // limpiar form para permitir otro
+    form.reset();
+  });
+
+  guardarOtroBtn.addEventListener('click', function(){
+    // simplemente resetear para otro ingreso
+    form.reset();
+    this.style.display = 'none';
+    modalAlerts.style.display = 'none';
+  });
+})();
+</script>
+
+{% comment %} modal contratos {% endcomment %}
+<div class="modal fade" id="contratosModal" tabindex="-1" aria-labelledby="contratosModalLabel" aria-hidden="true" data-bs-backdrop="static" 
+     data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contratosModalLabel">Contratos del Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="contratosModalBody">
+        <p class="text-muted">Cargando contratos...</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".ver-contratos").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const userId = this.dataset.user;
+      const modalBody = document.getElementById("contratosModalBody");
+
+      modalBody.innerHTML = "<p class='text-muted'>Cargando contratos...</p>";
+
+      fetch(`/documents/contratos/${userId}/`)
+        .then(res => res.json())
+        .then(data => {
+          modalBody.innerHTML = data.html;
+        })
+        .catch(err => {
+          modalBody.innerHTML = "<p class='text-danger'>Error al cargar contratos.</p>";
+        });
+    });
+  });
+});
+</script>
+
+{% comment %} filtros {% endcomment %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const filterSelects = document.querySelectorAll('.filter-select');
