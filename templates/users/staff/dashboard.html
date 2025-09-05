@@ -6,8 +6,8 @@
   <div class="header">
     <div class="header-left">
       <div class="logo-container">
-        <img src="/static/img/EasyCert" alt="EasyCert Logo" class="logo-img">
-        <span class="logo-text">EASYCERT</span>
+            <img src="{% static 'img/sen.jpg' %}" alt="Logo EasyCert">
+        <span class="logo-text">SECOB </span>
       </div>
     </div>
     <div class="user-info">
@@ -67,7 +67,8 @@
     </div>
     
     <!-- Listado de solicitudes en tabla -->
-     <div style="width: 1200px; height: 520px; overflow: auto;">
+    
+     <div style="width: 1500px; height: 520px; overflow: auto;">
     <div class="solicitudes">
       <div class="solicitudes-header">
         <h2>Solicitudes de Constancias</h2>
@@ -80,8 +81,6 @@
             <tr>
               <th>Usuario</th>
               <th>Documento</th>
-              {% comment %} <th>Email</th> {% endcomment %}
-              {% comment %} <th>Fecha Solicitud</th> {% endcomment %}
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -91,15 +90,12 @@
             <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
               <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
               <td>{{ s.usuario.numero_documento }}</td>
-              {% comment %} <td>{{ s.usuario.email }}</td> {% endcomment %}
-              {% comment %} <td>{{ s.creado_en|date:"d/m/Y" }}</td> {% endcomment %}
+         
               <td>
                 <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
               </td>
               <td class="action-buttons">
-                {% comment %} <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
-                  <i class="fas fa-upload"></i>
-                </a> {% endcomment %}
+             
                 <button type="button" class=" open-contrato-modal" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
                 {% comment %} <i class="fas fa-file-pdf"></i> {% endcomment %}Gestionar Solicitud
                 </button>
@@ -111,12 +107,7 @@
                   title="Ver contratos">
                   <i class="fas fa-file-contract"></i>
                 </a>
-                {% comment %} <a href="{% url 'certificates:manual_fields' s.usuario.id %}" class="btn-action" title="Editar">
-                  <i class="fas fa-edit"></i>
-                </a>
-                <a href="{% url 'certificates:generar_constancia' s.usuario.id %}" class="btn-action" title="Descargar">
-                  <i class="fas fa-download"></i>
-                </a> {% endcomment %}
+               
               </td>
             </tr>
             {% empty %}

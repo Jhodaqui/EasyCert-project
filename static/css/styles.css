@@ -639,18 +639,32 @@ h6 { font-size: 1rem; }
 
 
 /* Estilos para la tabla */
-  .table-container {
-    overflow-x: auto;
-    background: white;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow);
-    padding: 20px;
-  }
-  
+
+.solicitudes {
+  padding: 20px; /* espacio interno para la tarjeta */
+  margin: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.table-container {
+  overflow-x: auto;
+  background: white;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
   .solicitudes-table {
     width: 100%;
     border-collapse: collapse;
-  }
+    margin: 0; /* sin margen */
+    padding: 0; /* sin padding */
+}
+
   
   .solicitudes-table th {
     background-color: #f8f9fa;
