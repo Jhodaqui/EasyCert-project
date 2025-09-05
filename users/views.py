@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from .utils import crear_carpetas as crear_CarpetasUsuario
 
 from .forms import RegisterForm, LoginForm, ConstanciaForm, Constancia, BulkUploadForm
 import io
@@ -26,6 +27,9 @@ def register_view(request):
             user = form.save(commit=False)
             user.is_active = True  # Ya no requiere activación
             user.save()
+
+            crear_CarpetasUsuario(user)
+
             messages.success(request, "Usuario registrado con éxito. Ya puedes iniciar sesión.")
             return redirect("login")
         else:
@@ -209,6 +213,17 @@ def staff_dashboard(request):
 
 @login_required
 def user_dashboard(request):
+    user = request.user  
+    
+    solicitudes = Constancia.objects.filter(usuario=user).order_by("-creado_en")
+
+    return render(
+        request,
+        "users/user/dashboard_home.html",
+        {"solicitudes": solicitudes}
+    )
+@login_required
+def user_dashboard_solicitud(request):
     user = request.user  
 
     initial_data = {

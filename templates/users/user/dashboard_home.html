@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard">
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-container">
+                <img src="/static/img/EasyCert" alt="EasyCert Logo" class="logo-img">
+                <span class="logo-text">EASYCERT</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="welcome-text">Hola, {{ user.nombres }}</span>
+            <a href="{% url 'logout' %}" class="logout-button">Cerrar Sesión</a>
+</div>
+</div>
+<div class="content">
+    
+    <!-- Listado de solicitudes en tabla -->
+     <div style="width: 1200px; height: 520px; overflow: auto;">
+    <div class="solicitudes">
+      <div class="solicitudes-header">
+        <h2>Solicitudes de Constancias</h2>
+        <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
+        <a href="{% url 'user_dashboard_solicitud' %}" class="btn btn-primary">
+        <span class="badge-count">Solicitar Constancia</span>
+        </a>
+      </div>
+
+      <div class="table-container">
+        <table class="solicitudes-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Documento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in solicitudes %}
+            <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+              <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
+              <td>{{ s.usuario.numero_documento }}</td>
+              <td>
+                <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
+              </td>
+              <td class="action-buttons">
+                <a href="#" class="btn btn-primary" title="Descargar PDF">
+                    Descargar PDF
+                  <i class="fas fa-upload"></i>
+                </a>
+                
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <h3>No hay solicitudes</h3>
+                <p>No se encontraron solicitudes de constancias.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock%}
