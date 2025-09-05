@@ -21,9 +21,9 @@
       <div class="solicitudes-header">
         <h2>Solicitudes de Constancias</h2>
         <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
-        <a href="{% url 'user_dashboard_solicitud' %}" class="btn btn-primary">
-        <span class="badge-count">Solicitar Constancia</span>
-        </a>
+        <button type="button" class="btn btn-primary" id="abrirFormularioBtn">
+        Generar constancia
+        </button>
       </div>
 
       <div class="table-container">
@@ -67,6 +67,49 @@
     </div>
   </div>
 </div>
+
+{% comment %} Modal para solicitar constancia {% endcomment %}
+<div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content p-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Solicitar Constancia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="modalFormularioContenido">
+        <!-- Aquí se cargará el formulario vía AJAX -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const abrirBtn = document.getElementById("abrirFormularioBtn");
+  const modalBody = document.getElementById("modalFormularioContenido");
+
+  abrirBtn.addEventListener("click", function () {
+    fetch("{% url 'formulario_constancia' %}", {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Error al cargar el formulario");
+      return response.json();
+    })
+    .then(data => {
+      modalBody.innerHTML = data.form_html;
+      const modal = new bootstrap.Modal(document.getElementById("formularioModal"));
+      modal.show();
+    })
+    .catch(error => {
+      modalBody.innerHTML = `<div class="alert alert-danger">No se pudo cargar el formulario.</div>`;
+      console.error(error);
+    });
+  });
+});
+</script>
 
 
 {% endblock%}

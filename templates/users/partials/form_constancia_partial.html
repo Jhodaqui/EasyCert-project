@@ -1,0 +1,33 @@
+<form method="post" id="constanciaForm" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- Nombre, documento y correo -->
+  <div class="mb-2">
+    <p><strong>{{ form.nombres.label }}:</strong> {{ form.apellidos }}</p>
+    <p><strong>{{ form.numero_documento.label }}:</strong> {{ form.numero_documento }}</p>
+    <p><strong>{{ form.email.label }}:</strong> {{ form.email }}</p>
+  </div>
+
+  <!-- Fechas en dos columnas -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="{{ form.fecha_inicial.id_for_label }}"><strong>{{ form.fecha_inicial.label }}:</strong></label>
+      {{ form.fecha_inicial }}
+    </div>
+    <div class="col-md-6">
+      <label for="{{ form.fecha_final.id_for_label }}"><strong>{{ form.fecha_final.label }}:</strong></label>
+      {{ form.fecha_final }}
+    </div>
+  </div>
+
+  <!-- Comentario -->
+  <div class="mb-3">
+    <label for="{{ form.comentario.id_for_label }}"><strong>{{ form.comentario.label }}:</strong></label>
+    {{ form.comentario }}
+  </div>
+
+  <!-- Botón -->
+  <div class="text-end">
+    <button type="submit" class="btn btn-primary px-4 rounded-pill">Solicitar</button>
+  </div>
+</form>

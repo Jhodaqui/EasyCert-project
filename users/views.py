@@ -10,6 +10,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from .utils import crear_carpetas as crear_CarpetasUsuario
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm
 import io
@@ -219,6 +221,31 @@ def user_dashboard(request):
         "users/user/dashboard_home.html",
         {"solicitudes": solicitudes}
     )
+
+@login_required
+def mostrar_formulario_constancia(request):
+    user = request.user
+
+    # Datos precargados del usuario
+    initial_data = {
+        "nombre_completo": f"{user.nombres} {user.apellidos}",
+        "numero_documento": user.numero_documento,
+        "tipo_documento": user.tipo_documento,
+        "email": user.email,
+    }
+
+    form = ConstanciaForm(initial=initial_data)
+
+    # Solo responder si es una petición AJAX
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string(
+            "users/partials/form_constancia_partial.html",
+            {"form": form},
+            request=request
+        )
+        return JsonResponse({"form_html": html})
+
+    return JsonResponse({"error": "Petición inválida"}, status=400)
 
 @login_required
 def user_dashboard_solicitud(request):
