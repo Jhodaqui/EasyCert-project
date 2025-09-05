@@ -3,12 +3,15 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.core.files.storage import default_storage
 from .models import CustomUser, TIPOS_DOCUMENTO, Constancia
-from datetime import date
 
+from datetime import datetime
 # Dominios permitidos
 ALLOWED_EMAIL_DOMAINS = {
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "sena.edu.co"
 }
+
+AÑO_ACTUAL = datetime.now().year
+AÑOS = [(str(a), str(a)) for a in range( 1990, AÑO_ACTUAL + 1)]
 
 
 class RegisterForm(forms.ModelForm):
@@ -17,6 +20,7 @@ class RegisterForm(forms.ModelForm):
         widget=forms.PasswordInput,
         required=True,
         min_length=5
+        
     )
     password2 = forms.CharField(
         label="Confirmar contraseña",
@@ -110,24 +114,37 @@ class ConstanciaForm(forms.Form):
     numero_documento = forms.CharField(label="Número Documento", disabled=True)
     tipo_documento = forms.CharField(label="Tipo Documento", disabled=True)
     email = forms.EmailField(label="Correo electrónico", disabled=True)
+    
+# fechas por año, ensayo de pruebas y error
+    fecha_inicial = forms.ChoiceField(
+        label="Año inicial de la constancia",
+        choices=AÑOS
+    )
+    fecha_final = forms.ChoiceField(
+        label="Año final de la constancia",
+        choices=AÑOS
+    )
+# comentario del formulario
+    comentario = forms.CharField(
+    label="Comentario",
+    required=False,
+    widget=forms.Textarea(attrs={
+        "placeholder": "Escribe tu comentario aquí...",
+        "rows": 4,
+        "cols": 40
+    })
+    )
 
-    fecha_inicial = forms.DateField(
-        label="Fecha inicial de la constancia",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
-    fecha_final = forms.DateField(
-        label="Fecha final de la constancia",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
 
     def clean(self):
         cleaned_data = super().clean()
-        fecha_inicial = cleaned_data.get("fecha_inicial")
-        fecha_final = cleaned_data.get("fecha_final")
+        año_inicial = int(cleaned_data.get("fecha_inicial", 0))
+        año_final = int(cleaned_data.get("fecha_final", 0))
 
-        if fecha_inicial and fecha_final:
-            if fecha_inicial > fecha_final:
-                self.add_error("fecha_inicial", "La fecha inicial no puede ser mayor que la fecha final.")
-                self.add_error("fecha_final", "La fecha final no puede ser menor que la fecha inicial.")
+        if año_inicial > año_final:
+            self.add_error("fecha_inicial", "El año inicial no puede ser mayor que el año final.")
+            self.add_error("fecha_final", "El año final no puede ser menor que el año inicial.")
 
         return cleaned_data
+    
+    

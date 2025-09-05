@@ -11,30 +11,40 @@
       {% csrf_token %}
       {{ form.non_field_errors }}
 
-      <div class="form-group">
-        {{ form.nombre_completo }}
-        {{ form.nombre_completo.errors }}
+  <div class="form-group">
+    <label><strong>Nombre completo:</strong></label><br>
+    <p>{{ form.nombre_completo.value }}</p>
+  </div>
+  <div class="form-group">
+    <label><strong>Número de documento:</strong></label><br>
+    <p>{{ form.numero_documento.value }}</p>
+  </div>
+  <div class="form-group">
+    <label><strong>Tipo de documento:</strong></label><br>
+    <p>{{ form.tipo_documento.value }}</p>
+  </div>
+  <div class="form-group">
+    <label><strong>Correo electrónico:</strong></label><br>
+    <p>{{ form.email.value }}</p>
+ 
+     <div style="display: flex; gap: 1rem;">
+      <div class="form-group" style="flex: 1;">
+      {{ form.fecha_inicial.label_tag }}
+      {{ form.fecha_inicial }}
+      {{ form.fecha_inicial.errors }}
       </div>
-      <div class="form-group">
-        {{ form.numero_documento }}
-        {{ form.numero_documento.errors }}
-      </div>
-      <div class="form-group">
-        {{ form.tipo_documento }}
-        {{ form.tipo_documento.errors }}
-      </div>
-      <div class="form-group">
-        {{ form.email }}
-        {{ form.email.errors }}
-      </div>
-      <div class="form-group">
-        {{ form.fecha_inicial }}
-        {{ form.fecha_inicial.errors }}
-      </div>
-      <div class="form-group">
-        {{ form.fecha_final }}
-        {{ form.fecha_final.errors }}
-      </div>
+
+  <div class="form-group" style="flex: 1;">
+    {{ form.fecha_final.label_tag }}
+    {{ form.fecha_final }}
+    {{ form.fecha_final.errors }}
+  </div>
+</div>
+
+        <div class="form-group">
+        {{ form.comentario }}
+        {{ form.comentario.errors }}
+
       <div class="form-group">
         {{ form.tipo_constancia }}
         {{ form.tipo_constancia.errors }}
@@ -45,24 +55,6 @@
     </form>
   </div>
 
-  <!-- Logo arriba a la derecha -->
-  <div class="constancia-logo">
-    <img src="{% static 'img/EasyCert.jpg' %}" alt="Logo EasyCert">
-  </div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-4 text-center">
-      <div class="modal-body">
-        <h5>Tu solicitud ha sido enviada</h5>
-        <p>Verifica tu información, si tienes alguna duda corrobora tus datos</p>
-        <a href="{% url 'user_dashboard' %}" class="btn btn-success">Aceptar</a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {

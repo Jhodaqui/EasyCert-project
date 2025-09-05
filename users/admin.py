@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django import forms
 from django.shortcuts import render,redirect
 from django.contrib import messages
-import pandas as pd
+import pandas as pd 
 from .models import CustomUser
 
 # Register your models here.

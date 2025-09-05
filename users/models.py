@@ -73,6 +73,7 @@ class Constancia(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha_inicial = models.DateField()
     fecha_final = models.DateField()
+    comentario = models.TextField(blank=True, null=True) 
     estado = models.CharField(max_length=20, choices=ESTADOS, default="pendiente")
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)

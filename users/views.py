@@ -11,11 +11,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from .utils import crear_carpetas as crear_CarpetasUsuario
 
-from .forms import RegisterForm, LoginForm, ConstanciaForm, Constancia, BulkUploadForm
+from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm
 import io
 import csv
 import pandas as pd
-from .models import CustomUser
+from .models import CustomUser, Constancia
+from datetime import date
 
 # Create your views here.
 
@@ -52,7 +53,6 @@ def login_view(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    
 
                     # Redirección según rol
                     if user.role == "admin":
@@ -64,11 +64,9 @@ def login_view(request):
                 else:
                     # Error específico para cuenta no activada
                     field_errors['general'] = "⏳ Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico para activarla."
-                    # messages.error(request, "Tu cuenta aún no está activada. Revisa tu correo.")  # ELIMINADO
             else:
                 # Error específico para credenciales incorrectas
                 field_errors['general'] = "🔒 Correo electrónico o contraseña incorrectos. Verifica tus credenciales e intenta nuevamente."
-                # messages.error(request, "Correo o contraseña incorrectos.")  # ELIMINADO
         else:
             # Capturar errores de validación del formulario por campo
             for field, errors in form.errors.items():
@@ -95,7 +93,6 @@ def home_view(request):
 
 
 # Password reset request
-from django.utils.encoding import force_str
 def password_reset_request_view(request):
     from .forms import PasswordResetRequestForm
     if request.method == "POST":
@@ -222,12 +219,13 @@ def user_dashboard(request):
         "users/user/dashboard_home.html",
         {"solicitudes": solicitudes}
     )
+
 @login_required
 def user_dashboard_solicitud(request):
-    user = request.user  
+    user = request.user
 
     initial_data = {
-        "nombre_completo": user.nombres + " " + user.apellidos,
+        "nombre_completo": f"{user.nombres} {user.apellidos}",
         "numero_documento": user.numero_documento,
         "tipo_documento": user.tipo_documento,
         "email": user.email,
@@ -238,14 +236,15 @@ def user_dashboard_solicitud(request):
         if form.is_valid():
             Constancia.objects.create(
                 usuario=user,
-                fecha_inicial=form.cleaned_data["fecha_inicial"],
-                fecha_final=form.cleaned_data["fecha_final"],
+                fecha_inicial=date(int(form.cleaned_data["fecha_inicial"]), 1, 1),
+                fecha_final=date(int(form.cleaned_data["fecha_final"]), 1, 1),
+                
             )
             messages.success(request, "Solicitud de constancia enviada correctamente.")
             return redirect("user_dashboard")
     else:
         form = ConstanciaForm(initial=initial_data)
-    
+
     solicitudes = Constancia.objects.filter(usuario=user).order_by("-creado_en")
 
     return render(
