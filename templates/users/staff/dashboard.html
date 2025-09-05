@@ -80,19 +80,19 @@
             <tr>
               <th>Usuario</th>
               <th>Documento</th>
-              <th>Email</th>
-              <th>Fecha Solicitud</th>
+              {% comment %} <th>Email</th> {% endcomment %}
+              {% comment %} <th>Fecha Solicitud</th> {% endcomment %}
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {% for s in solicitudes %}
-            <tr class="solicitud-row" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+            <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
               <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
-              <td>{{ s.usuario.tipo_documento }} {{ s.usuario.numero_documento }}</td>
-              <td>{{ s.usuario.email }}</td>
-              <td>{{ s.creado_en|date:"d/m/Y" }}</td>
+              <td>{{ s.usuario.numero_documento }}</td>
+              {% comment %} <td>{{ s.usuario.email }}</td> {% endcomment %}
+              {% comment %} <td>{{ s.creado_en|date:"d/m/Y" }}</td> {% endcomment %}
               <td>
                 <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
               </td>
@@ -100,8 +100,8 @@
                 {% comment %} <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
                   <i class="fas fa-upload"></i>
                 </a> {% endcomment %}
-                <button type="button" class="btn-action open-contrato-modal" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
-                <i class="fas fa-file-pdf"></i>
+                <button type="button" class=" open-contrato-modal" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
+                {% comment %} <i class="fas fa-file-pdf"></i> {% endcomment %}Gestionar Solicitud
                 </button>
                 <a href="#" 
                   class="btn-action ver-contratos" 
@@ -139,7 +139,7 @@
 <!-- Modal -->
 <div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" 
      data-bs-keyboard="false">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <form id="contratoModalForm" enctype="multipart/form-data">
         {% csrf_token %}
@@ -161,7 +161,7 @@
               <input type="file" name="archivo" id="id_archivo" accept="application/pdf" class="form-control">
               <div class="form-text">Sube el PDF. Se extraerá: Objeto, Obligaciones, valor de pago y Plazo.</div>
             </div>
-            <div class="col-md-6">
+            {% comment %} <div class="col-md-6">
               <label>Número de contrato</label>
               <input type="text" name="numero_contrato" id="id_numero_contrato" class="form-control">
             </div>
@@ -178,7 +178,7 @@
               <label>Valor de pago</label>
               <input type="text" name="valor_pago" id="id_valor_pago" class="form-control" placeholder="$...">
               <small class="form-text">Si se detecta automáticamente, se mostrará; puedes ajustar aquí.</small>
-            </div>
+            </div> {% endcomment %}
           </div>
         </div>
 

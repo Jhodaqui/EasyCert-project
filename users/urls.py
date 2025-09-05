@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     register_view, login_view, logout_view, home_view,
-    password_reset_request_view, password_reset_confirm_view, admin_dashboard, users_bulk_upload, user_dashboard, staff_dashboard, manage_roles
+    password_reset_request_view, password_reset_confirm_view, admin_dashboard, users_bulk_upload, user_dashboard, user_dashboard_solicitud, staff_dashboard, manage_roles
 )
 
 urlpatterns = [
@@ -17,5 +17,6 @@ urlpatterns = [
     path("users/bulk-upload/", users_bulk_upload, name="users_bulk_upload"),
     path("staff-dashboard/", staff_dashboard, name="staff_dashboard"),
     path("user-dashboard/", user_dashboard, name="user_dashboard"),
+    path("user-dashboard/solicitud/", user_dashboard_solicitud, name="user_dashboard_solicitud"),
     path("manage-roles/", manage_roles, name="manage_roles"),
 ]
