@@ -1551,3 +1551,13 @@ h6 { font-size: 1rem; }
             font-size: 48px;
         }
     }
+/* añadido para mostrar campos readonly */
+.readonly-field {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+.readonly-field:focus {
+  border-color: #ced4da;
+  box-shadow: none;
+  outline: none;
+}

@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from .utils import crear_carpetas as crear_CarpetasUsuario
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm
 import io
@@ -184,7 +184,8 @@ def users_bulk_upload(request):
 
                     user_form = RegisterForm(data)
                     if user_form.is_valid():
-                        user_form.save()
+                        user = user_form.save()
+                        crear_CarpetasUsuario(user)
                     else:
                         messages.error(request, f"Error en {row.get('email')}: {user_form.errors}")
 
@@ -226,7 +227,6 @@ def user_dashboard(request):
 def mostrar_formulario_constancia(request):
     user = request.user
 
-    # Datos precargados del usuario
     initial_data = {
         "nombre_completo": f"{user.nombres} {user.apellidos}",
         "numero_documento": user.numero_documento,
@@ -236,7 +236,6 @@ def mostrar_formulario_constancia(request):
 
     form = ConstanciaForm(initial=initial_data)
 
-    # Solo responder si es una petición AJAX
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         html = render_to_string(
             "users/partials/form_constancia_partial.html",
@@ -246,6 +245,50 @@ def mostrar_formulario_constancia(request):
         return JsonResponse({"form_html": html})
 
     return JsonResponse({"error": "Petición inválida"}, status=400)
+
+@login_required
+def procesar_constancia(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        user = request.user
+        
+        initial_data = {
+            "nombre_completo": f"{user.nombres} {user.apellidos}",
+            "numero_documento": user.numero_documento,
+            "tipo_documento": user.tipo_documento,
+            "email": user.email,
+        }
+
+        form = ConstanciaForm(request.POST, initial=initial_data)
+        
+        if form.is_valid():
+            try:
+                Constancia.objects.create(
+                    usuario=user,
+                    fecha_inicial=date(int(form.cleaned_data["fecha_inicial"]), 1, 1),
+                    fecha_final=date(int(form.cleaned_data["fecha_final"]), 1, 1),
+                    comentario=form.cleaned_data["comentario"],
+                    estado="pendiente"
+                )
+                
+                # Devolver éxito PERO sin recargar la página
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Solicitud de constancia enviada correctamente.'
+                })
+                
+            except Exception as e:
+                print(f"Error al guardar: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'__all__': ['Error al procesar la solicitud']}
+                }, status=500)
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=400)
 
 @login_required
 def user_dashboard_solicitud(request):

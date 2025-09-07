@@ -1,29 +1,62 @@
-<form method="post" id="constanciaForm" enctype="multipart/form-data">
+<form method="post" id="constanciaForm" enctype="multipart/form-data" class="p-4">
   {% csrf_token %}
 
+  <!-- Título -->
+  <h2 class="text-center mb-4">Solicitar Constancia</h2>
+
   <!-- Nombre, documento y correo -->
-  <div class="mb-2">
-    <p><strong>{{ form.nombres.label }}:</strong> {{ form.apellidos }}</p>
-    <p><strong>{{ form.numero_documento.label }}:</strong> {{ form.numero_documento }}</p>
-    <p><strong>{{ form.email.label }}:</strong> {{ form.email }}</p>
+  <div class="row mb-3">
+    <div class="col-md-6 mb-3">
+      <label class="form-label fw-bold">Nombre Completo</label>
+      <div class="form-control bg-light">{{ form.nombre_completo.value }}</div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label fw-bold">Número Documento</label>
+      <div class="form-control bg-light">{{ form.numero_documento.value }}</div>
+    </div>
   </div>
 
-  <!-- Fechas en dos columnas -->
+  <div class="mb-3">
+    <label class="form-label fw-bold">Correo electrónico</label>
+    <div class="form-control bg-light">{{ form.email.value }}</div>
+  </div>
+
+  <!-- Años de constancia -->
   <div class="row mb-3">
-    <div class="col-md-6">
-      <label for="{{ form.fecha_inicial.id_for_label }}"><strong>{{ form.fecha_inicial.label }}:</strong></label>
-      {{ form.fecha_inicial }}
+    <div class="col-md-6 mb-3">
+      <label class="form-label fw-bold">Año inicial de la constancia</label>
+      <div class="d-flex align-items-center">
+        <select class="form-select" name="{{ form.fecha_inicial.name }}" id="{{ form.fecha_inicial.id_for_label }}">
+          {% for choice in form.fecha_inicial.field.choices %}
+            <option value="{{ choice.0 }}" {% if choice.0 == form.fecha_inicial.value %}selected{% endif %}>{{ choice.1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
-    <div class="col-md-6">
-      <label for="{{ form.fecha_final.id_for_label }}"><strong>{{ form.fecha_final.label }}:</strong></label>
-      {{ form.fecha_final }}
+    <div class="col-md-6 mb-3">
+      <label class="form-label fw-bold">Año final de la constancia</label>
+      <div class="d-flex align-items-center">
+        <select class="form-select" name="{{ form.fecha_final.name }}" id="{{ form.fecha_final.id_for_label }}">
+          {% for choice in form.fecha_final.field.choices %}
+            <option value="{{ choice.0 }}" {% if choice.0 == form.fecha_final.value %}selected{% endif %}>{{ choice.1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
   </div>
+
+  <!-- Línea divisoria -->
+  <hr class="my-4">
 
   <!-- Comentario -->
-  <div class="mb-3">
-    <label for="{{ form.comentario.id_for_label }}"><strong>{{ form.comentario.label }}:</strong></label>
-    {{ form.comentario }}
+  <div class="mb-4">
+    <label class="form-label fw-bold">Comentario:</label>
+    <textarea 
+      class="form-control" 
+      name="{{ form.comentario.name }}" 
+      id="{{ form.comentario.id_for_label }}" 
+      rows="4" 
+      placeholder="Escribe tu comentario aquí...">{% if form.comentario.value %}{{ form.comentario.value }}{% endif %}</textarea>
   </div>
 
   <!-- Botón -->

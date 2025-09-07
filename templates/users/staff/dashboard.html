@@ -156,29 +156,51 @@
           </div>
 
           <div class="row g-3">
-            <div class="col-12">
-              <label>PDF del contrato</label>
-              <input type="file" name="archivo" id="id_archivo" accept="application/pdf" class="form-control">
-              <div class="form-text">Sube el PDF. Se extraerá: Objeto, Obligaciones, valor de pago y Plazo.</div>
-            </div>
-            {% comment %} <div class="col-md-6">
+            <!-- Número de contrato -->
+            <div class="col-md-3">
               <label>Número de contrato</label>
               <input type="text" name="numero_contrato" id="id_numero_contrato" class="form-control">
             </div>
+
+            <!-- Fechas -->
             <div class="col-md-3">
-              <label>Fecha generación</label>
-              <input type="date" name="fecha_generacion" id="id_fecha_generacion" class="form-control">
+              <label>Fecha Inicio</label>
+              <input type="text" name="fecha_inicio" id="id_fecha_inicio" class="form-control">
             </div>
             <div class="col-md-3">
-              <label>Fecha inicio</label>
-              <input type="date" name="fecha_inicio" id="id_fecha_inicio" class="form-control">
+              <label>Fecha Generación</label>
+              <input type="text" name="fecha_generacion" id="id_fecha_generacion" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label>Fecha Fin (Plazo)</label>
+              <input type="text" name="fecha_fin" id="id_fecha_fin" class="form-control">
             </div>
 
-            <div class="col-md-6">
+            <!-- Valor -->
+            <div class="col-md-3">
               <label>Valor de pago</label>
               <input type="text" name="valor_pago" id="id_valor_pago" class="form-control" placeholder="$...">
-              <small class="form-text">Si se detecta automáticamente, se mostrará; puedes ajustar aquí.</small>
-            </div> {% endcomment %}
+            </div>
+
+            <!-- PDF -->
+            <div class="col-12">
+              <label>PDF del contrato</label>
+              <input type="file" name="archivo" id="id_archivo" accept="application/pdf" class="form-control">
+              <div class="form-text">Sube el PDF. Se extraerá: Objeto, Objetivos, Valor de pago y Plazo.</div>
+            </div>
+
+            <!-- Vista previa de datos extraídos -->
+            <div class="col-12 mt-3" id="wrapper_objeto" style="display:none;">
+              <label>Objeto</label>
+              <textarea name="objeto" id="id_objeto" class="form-control" readonly></textarea>
+              <a href="#" id="edit_objeto" class="small text-primary">Editar</a>
+            </div>
+
+            <div class="col-12 mt-3" id="wrapper_objetivos" style="display:none;">
+              <label>Objetivos Específicos</label>
+              <textarea name="objetivos_especificos" id="id_objetivos_especificos" class="form-control" readonly></textarea>
+              <a href="#" id="edit_objetivos" class="small text-primary">Editar</a>
+            </div>
           </div>
         </div>
 
@@ -191,126 +213,6 @@
     </div>
   </div>
 </div>
-{% comment %} cuando se carga el PDF {% endcomment %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const fileInput = document.getElementById("id_archivo");
-
-  fileInput.addEventListener("change", function () {
-    const file = this.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("archivo", file);
-
-    fetch("{% url 'documents:prefill_contrato' %}", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.ok) {
-          const m = data.metadata;
-          // autocompletar campos
-          if (m.valor_pago) document.getElementById("id_valor_pago").value = m.valor_pago;
-        } else {
-          alert("⚠️ No se pudo procesar el PDF: " + data.error);
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert("⚠️ Error al enviar PDF para prellenar.");
-      });
-  });
-});
-</script>
-<script>
-(function(){
-  const modalEl = document.getElementById('contratoModal');
-  const form = document.getElementById('contratoModalForm');
-  const modalErrors = document.getElementById('modalErrors');
-  const modalAlerts = document.getElementById('modalAlerts');
-  const guardarOtroBtn = document.getElementById('guardarOtroBtn');
-
-  function getCSRF(){
-    const el = document.querySelector('[name=csrfmiddlewaretoken]');
-    return el ? el.value : '';
-  }
-
-  // Abrir modal y setear usuario
-  document.querySelectorAll('.open-contrato-modal').forEach(btn => {
-    btn.addEventListener('click', function(){
-      const userId = this.dataset.userId;
-      document.getElementById('modal_usuario_id').value = userId;
-      // resetear form
-      form.reset();
-      modalAlerts.style.display = 'none';
-      guardarOtroBtn.style.display = 'none';
-      // mostrar modal (Bootstrap 5)
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    });
-  });
-
-  function showErrors(errs){
-    modalErrors.innerHTML = '';
-    for(const k in errs){
-      const msgs = errs[k];
-      if(Array.isArray(msgs)){
-        msgs.forEach(m => { modalErrors.innerHTML += `<div>${k}: ${m}</div>`; });
-      } else {
-        modalErrors.innerHTML += `<div>${k}: ${msgs}</div>`;
-      }
-    }
-    modalAlerts.style.display = 'block';
-  }
-
-  form.addEventListener('submit', async function(e){
-    e.preventDefault();
-    modalAlerts.style.display = 'none';
-    modalErrors.innerHTML = '';
-
-    const fd = new FormData(form);
-    const url = "{% url 'documents:contrato_create_modal' %}";
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': getCSRF() },
-      body: fd
-    });
-
-    const data = await res.json();
-    if(!res.ok || !data.ok){
-      showErrors(data.errors || data);
-      return;
-    }
-
-    // actualizar tabla (asumiendo que hay un contenedor con id 'contratosTable' o reemplazar manualmente)
-    // Si la plantilla no tiene un div específico, puedes forzar recarga de la página en lugar de inyectar HTML.
-    const tableContainer = document.getElementById('contratosTable');
-    if(tableContainer && data.table_html){
-      tableContainer.innerHTML = data.table_html;
-    } else {
-      // fallback: recargar la página para ver cambios
-      window.location.reload();
-    }
-
-    // mostrar "guardar y cargar otro"
-    guardarOtroBtn.style.display = 'inline-block';
-    // limpiar form para permitir otro
-    form.reset();
-  });
-
-  guardarOtroBtn.addEventListener('click', function(){
-    // simplemente resetear para otro ingreso
-    form.reset();
-    this.style.display = 'none';
-    modalAlerts.style.display = 'none';
-  });
-})();
-</script>
 
 {% comment %} modal contratos {% endcomment %}
 <div class="modal fade" id="contratosModal" tabindex="-1" aria-labelledby="contratosModalLabel" aria-hidden="true" data-bs-backdrop="static" 
@@ -327,120 +229,18 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   </div>
 </div>
+
+{% comment %} Para cargar con js {% endcomment %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".ver-contratos").forEach(btn => {
-    btn.addEventListener("click", function () {
-      const userId = this.dataset.user;
-      const modalBody = document.getElementById("contratosModalBody");
-
-      modalBody.innerHTML = "<p class='text-muted'>Cargando contratos...</p>";
-
-      fetch(`/documents/contratos/${userId}/`)
-        .then(res => res.json())
-        .then(data => {
-          modalBody.innerHTML = data.html;
-        })
-        .catch(err => {
-          modalBody.innerHTML = "<p class='text-danger'>Error al cargar contratos.</p>";
-        });
-    });
-  });
-});
+  const csrfToken = "{{ csrf_token }}";
+  const urls = {
+    contratoCreate: "{% url 'documents:contrato_create_modal' %}",
+    prefillContrato: "{% url 'documents:prefill_contrato' %}",
+    verContratosBase: "/documents/contratos/"  // se concatena luego con el ID
+  };
 </script>
+{% comment %} Importamos el js {% endcomment %}
+<script src="{% static 'js/dashboard.js' %}"></script>
 
-{% comment %} filtros {% endcomment %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const filterSelects = document.querySelectorAll('.filter-select');
-  const searchInput = document.getElementById('searchInput');
-  const applyBtn = document.getElementById('applyFilters');
-  const rows = document.querySelectorAll('.solicitud-row');
-  
-  // Cambiar estilo al seleccionar filtro
-  filterSelects.forEach(select => {
-    select.addEventListener('change', function() {
-      this.style.backgroundColor = this.value ? '#f8f9fa' : 'white';
-    });
-  });
-  
-  // Función para aplicar filtros
-  function aplicarFiltros() {
-    const tipoValue = document.getElementById('tipoFilter').value;
-    const estadoValue = document.getElementById('estadoFilter').value;
-    const fechaValue = document.getElementById('fechaFilter').value;
-    const searchValue = searchInput.value.toLowerCase();
-    
-    // Obtener fecha actual para comparaciones
-    const hoy = new Date();
-    
-    rows.forEach(row => {
-      let mostrar = true;
-      const tipo = row.getAttribute('data-tipo');
-      const estado = row.getAttribute('data-estado');
-      const fechaStr = row.getAttribute('data-fecha');
-      const fecha = new Date(fechaStr);
-      const textoFila = row.textContent.toLowerCase();
-      
-      // Aplicar filtros
-      if (tipoValue && tipo !== tipoValue) {
-        mostrar = false;
-      }
-      
-      if (estadoValue && estado !== estadoValue) {
-        mostrar = false;
-      }
-      
-      if (fechaValue === 'hoy') {
-        const esHoy = fecha.getDate() === hoy.getDate() && 
-                      fecha.getMonth() === hoy.getMonth() && 
-                      fecha.getFullYear() === hoy.getFullYear();
-        if (!esHoy) mostrar = false;
-      } else if (fechaValue === 'semana') {
-        const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
-        if (fecha < inicioSemana) mostrar = false;
-      } else if (fechaValue === 'mes') {
-        if (fecha.getMonth() !== hoy.getMonth() || fecha.getFullYear() !== hoy.getFullYear()) {
-          mostrar = false;
-        }
-      }
-      
-      // Aplicar búsqueda
-      if (searchValue && !textoFila.includes(searchValue)) {
-        mostrar = false;
-      }
-      
-      // Mostrar u ocultar fila
-      row.style.display = mostrar ? '' : 'none';
-    });
-    
-    // Actualizar contador
-    const filasVisibles = document.querySelectorAll('.solicitud-row:not([style*="display: none"])');
-    document.querySelector('.badge-count').textContent = `${filasVisibles.length} solicitudes`;
-  }
-  
-  // Eventos para aplicar filtros
-  applyBtn.addEventListener('click', function() {
-    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Aplicando...';
-    
-    setTimeout(() => {
-      aplicarFiltros();
-      this.innerHTML = '<i class="fas fa-check"></i>Filtros Aplicados';
-      
-      setTimeout(() => {
-        this.innerHTML = '<i class="fas fa-filter"></i>Aplicar Filtros';
-      }, 2000);
-    }, 500);
-  });
-  
-  // Búsqueda en tiempo real
-  searchInput.addEventListener('input', aplicarFiltros);
-  
-  // Aplicar filtros al cambiar selects
-  filterSelects.forEach(select => {
-    select.addEventListener('change', aplicarFiltros);
-  });
-});
-</script>
+
 {% endblock %}

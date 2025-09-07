@@ -8,14 +8,13 @@ def contrato_upload_path(instance, filename):
 
 class Contrato(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="contratos")
-    numero_contrato = models.CharField(max_length=100, blank=True, null=True)   # manual
-    fecha_generacion = models.DateField(blank=True, null=True)  # manual
-    fecha_inicio = models.DateField(blank=True, null=True)      # manual
-    fecha_fin = models.DateField(blank=True, null=True)         # extraído (plazo)
-    objeto = models.TextField(blank=True, null=True)            # extraído
-    obligaciones = models.TextField(blank=True, null=True)      # extraído
-    objetivos_especificos = models.TextField(blank=True, null=True)  # extraído (si aplica)
-    valor_pago = models.CharField(max_length=200, blank=True, null=True)  # manual o extraído
+    numero_contrato = models.CharField(max_length=100, blank=True, null=True)
+    fecha_generacion = models.CharField(max_length=200, blank=True, null=True)  # antes DateField
+    fecha_inicio = models.CharField(max_length=200, blank=True, null=True)      # antes DateField
+    fecha_fin = models.CharField(max_length=200, blank=True, null=True)         # antes DateField
+    objetivos_especificos = models.TextField(blank=True, null=True)
+    valor_pago = models.CharField(max_length=200, blank=True, null=True)
+    objeto = models.TextField(blank=True, null=True)
     archivo = models.FileField(upload_to=contrato_upload_path, blank=True, null=True)
     creado = models.DateTimeField(auto_now_add=True)
 

@@ -22,7 +22,7 @@
         <h2>Solicitudes de Constancias</h2>
         <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
         <button type="button" class="btn btn-primary" id="abrirFormularioBtn">
-        Generar constancia
+        Solicitar constancia
         </button>
       </div>
 
@@ -69,8 +69,9 @@
 </div>
 
 {% comment %} Modal para solicitar constancia {% endcomment %}
-<div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+<div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" 
+     data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-4">
       <div class="modal-header">
         <h5 class="modal-title">Solicitar Constancia</h5>
@@ -85,31 +86,200 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+  let formDirty = false;        // Detecta si hay cambios en el formulario
+  let formOpened = false;       // Detecta si el modal ya fue abierto
+  let formSubmitted = false;    // Detecta si el formulario fue enviado correctamente
+  let forceReload = false;      // Evita la alerta cuando la recarga es intencional
+
   const abrirBtn = document.getElementById("abrirFormularioBtn");
   const modalBody = document.getElementById("modalFormularioContenido");
+  const modalEl = document.getElementById("formularioModal");
+  const modal = new bootstrap.Modal(modalEl);
 
+  // --- Mostrar advertencia SOLO si el formulario fue abierto, tiene cambios y no es recarga intencional
+  window.addEventListener('beforeunload', function (e) {
+    if (formOpened && formDirty && !formSubmitted && !forceReload) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // --- Marcar formulario como "dirty" cuando el usuario cambia algo
+  document.addEventListener('input', (e) => {
+    if (e.target.closest && e.target.closest('#constanciaForm')) {
+      formDirty = true;
+    }
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.closest && e.target.closest('#constanciaForm')) {
+      formDirty = true;
+    }
+  });
+
+  // --- Abrir modal y cargar formulario por AJAX
   abrirBtn.addEventListener("click", function () {
     fetch("{% url 'formulario_constancia' %}", {
-      headers: {
-        "X-Requested-With": "XMLHttpRequest"
-      }
+      headers: { "X-Requested-With": "XMLHttpRequest" }
     })
-    .then(response => {
-      if (!response.ok) throw new Error("Error al cargar el formulario");
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
       modalBody.innerHTML = data.form_html;
-      const modal = new bootstrap.Modal(document.getElementById("formularioModal"));
+
+      const form = document.getElementById("constanciaForm");
+      if (form) {
+        // Sincronizar valores iniciales
+        form.querySelectorAll('input, textarea, select').forEach(input => {
+          try { input.defaultValue = input.value; } catch(e){ /* ignore */ }
+        });
+
+        // Reseteamos estados
+        formDirty = false;
+        formOpened = true;
+        formSubmitted = false;
+
+        // Asociar evento de submit
+        form.addEventListener("submit", handleFormSubmit);
+      }
+
       modal.show();
     })
     .catch(error => {
-      modalBody.innerHTML = `<div class="alert alert-danger">No se pudo cargar el formulario.</div>`;
-      console.error(error);
+      modalBody.innerHTML = `<div class="alert alert-danger">Error al cargar el formulario</div>`;
+      modal.show();
     });
   });
+
+  // --- Manejo de envío del formulario
+  function handleFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Mostrar loading
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+    }
+
+    fetch("{% url 'procesar_constancia' %}", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": getCookie('csrftoken')
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Error en la respuesta del servidor');
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        formSubmitted = true; 
+        formDirty = false;
+
+        // 1. Limpiar y sincronizar formulario
+        form.reset();
+        form.querySelectorAll('input, textarea, select').forEach(input => {
+          try { input.defaultValue = input.value; } catch(e){/* ignore */ }
+        });
+
+        // 2. Mostrar mensaje de éxito
+        modalBody.innerHTML = `
+          <div class="alert alert-success text-center">
+            <h4>¡Solicitud enviada!</h4>
+            <p>${data.message}</p>
+            <p>La página se recargará automáticamente...</p>
+          </div>
+        `;
+
+        // 3. Recargar sin mostrar alerta
+        setTimeout(() => {
+          forceReload = true;
+          window.location.reload();
+        }, 1500);
+
+      } else {
+        // Mostrar errores de validación
+        showFormErrors(form, data.errors);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Solicitar';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      modalBody.innerHTML = `
+        <div class="alert alert-danger">
+          <h6>Error de conexión</h6>
+          <p>No se pudo conectar con el servidor. Intente nuevamente.</p>
+        </div>
+      `;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Solicitar';
+      }
+    });
+  }
+
+  // --- Mostrar errores en campos
+  function showFormErrors(form, errors) {
+    form.querySelectorAll('.is-invalid, .invalid-feedback').forEach(el => {
+      if (el.classList) el.classList.remove('is-invalid');
+      if (el.classList && el.classList.contains('invalid-feedback')) el.remove();
+    });
+
+    for (const field in errors) {
+      const fieldElement = form.querySelector(`[name="${field}"]`);
+      if (fieldElement) {
+        fieldElement.classList.add('is-invalid');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.innerHTML = errors[field].join('<br>');
+        fieldElement.parentNode.appendChild(errorDiv);
+      } else if (field === '__all__') {
+        form.insertAdjacentHTML('afterbegin', `
+          <div class="alert alert-danger">
+            ${errors[field].join('<br>')}
+          </div>
+        `);
+      }
+    }
+  }
+
+  // --- Solo reset cuando se cierra el modal (sin recargar)
+  modalEl.addEventListener("hidden.bs.modal", function () {
+    const form = document.getElementById("constanciaForm");
+    if (form) {
+      form.reset();
+      form.querySelectorAll('input, textarea, select').forEach(input => {
+        try { input.defaultValue = input.value; } catch(e){/* ignore */ }
+      });
+    }
+    formDirty = false;
+    formOpened = false;
+  });
+
+  // --- Obtener CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 });
 </script>
+
 
 
 {% endblock%}

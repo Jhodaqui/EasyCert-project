@@ -16,8 +16,8 @@
       <tr>
         <td>{{ contrato.numero_contrato|default:"—" }}</td>
         <td>{{ contrato.objeto|truncatechars:40 }}</td>
-        <td>{{ contrato.fecha_inicio|date:"d/m/Y" }}</td>
-        <td>{{ contrato.fecha_fin|date:"d/m/Y" }}</td>
+        <td>{{ contrato.fecha_inicio }}</td>
+        <td>{{ contrato.fecha_fin }}</td>
         <td>{{ contrato.valor_pago|default:"—" }}</td>
         <td>{{ contrato.creado|date:"d/m/Y H:i" }}</td>
       </tr>
