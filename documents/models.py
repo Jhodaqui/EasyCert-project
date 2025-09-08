@@ -1,21 +1,36 @@
 from django.db import models
 from django.conf import settings
+import os
 
 # Create your models here.
 
 def contrato_upload_path(instance, filename):
-    return f"contracts/{instance.usuario.numero_documento}/{filename}"
+    """
+    Guarda los archivos PDF dentro de la carpeta del usuario,
+    en la subcarpeta 'pdf', y con el número de contrato en el nombre.
+    """
+    base, ext = os.path.splitext(filename)
+    numero = instance.numero_contrato or "sin_numero"
+    return f"usuarios/{instance.usuario.numero_documento}/pdf/{numero}{ext}"
+
 
 class Contrato(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="contratos")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="contratos"
+    )
     numero_contrato = models.CharField(max_length=100, blank=True, null=True)
-    fecha_generacion = models.CharField(max_length=200, blank=True, null=True)  # antes DateField
-    fecha_inicio = models.CharField(max_length=200, blank=True, null=True)      # antes DateField
-    fecha_fin = models.CharField(max_length=200, blank=True, null=True)         # antes DateField
+    fecha_generacion = models.CharField(max_length=200, blank=True, null=True)
+    fecha_inicio = models.CharField(max_length=200, blank=True, null=True)
+    fecha_fin = models.CharField(max_length=200, blank=True, null=True)
     objetivos_especificos = models.TextField(blank=True, null=True)
     valor_pago = models.CharField(max_length=200, blank=True, null=True)
     objeto = models.TextField(blank=True, null=True)
+
+    # PDF subido se guarda en la carpeta `usuarios/<documento>/pdf/<numero_contrato>.pdf`
     archivo = models.FileField(upload_to=contrato_upload_path, blank=True, null=True)
+
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:

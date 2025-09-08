@@ -92,25 +92,40 @@ def contrato_create_modal(request):
         return JsonResponse({"ok": False, "errors": {"archivo": ["Archivo PDF requerido."]}}, status=400)
 
     try:
+        # Leer bytes para analizar PDF y guardar luego
         file_bytes = archivo.read()
         metadata = extract_contract_metadata(BytesIO(file_bytes))
 
         contrato = form.save(commit=False)
         contrato.usuario = usuario
-        contrato.objetivos_especificos = contrato.objetivos_especificos or metadata["objetivos_especificos"]
-        contrato.valor_pago = contrato.valor_pago or metadata["valor_pago"]
-        contrato.objeto = contrato.objeto or metadata["objeto", ""]
-        contrato.fecha_fin = contrato.fecha_fin or metadata["plazo_fecha"]
-        contrato.save()
-        contrato.archivo.save(archivo.name, ContentFile(file_bytes), save=True)
 
+        # Completar con lo que venga del PDF si el form no lo tiene
+        contrato.objetivos_especificos = contrato.objetivos_especificos or metadata.get("objetivos_especificos", "")
+        contrato.valor_pago = contrato.valor_pago or metadata.get("valor_pago", "")
+        contrato.objeto = contrato.objeto or metadata.get("objeto", "")
+        contrato.fecha_fin = contrato.fecha_fin or metadata.get("plazo_fecha", "")
+
+        # 🔑 Importante: asegurar numero_contrato antes de guardar el archivo
+        if not contrato.numero_contrato:
+            return JsonResponse({"ok": False, "errors": {"numero_contrato": ["Número de contrato requerido."]}}, status=400)
+
+        contrato.save()
+
+        # Guardar PDF en la ruta personalizada: usuarios/<doc>/pdf/<numero>.pdf
+        contrato.archivo.save(f"{contrato.numero_contrato}.pdf", ContentFile(file_bytes), save=True)
+
+        # Actualizar tabla en frontend
         html_table = render_to_string(
             "documents/partials/contratos_table.html",
             {"contratos": usuario.contratos.order_by('-creado')},
             request=request
         )
 
-        return JsonResponse({"ok": True, "message": "Contrato guardado correctamente.", "table_html": html_table})
+        return JsonResponse({
+            "ok": True,
+            "message": "Contrato guardado correctamente.",
+            "table_html": html_table
+        })
 
     except Exception as e:
         return JsonResponse({"ok": False, "errors": {"__all__": [str(e)]}}, status=500)

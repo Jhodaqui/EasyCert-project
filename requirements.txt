@@ -4,3 +4,4 @@ python-dotenv
 PyPDF2
 python-magic-bin
 pandas
+mailmerge

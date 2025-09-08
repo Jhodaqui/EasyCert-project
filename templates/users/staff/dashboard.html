@@ -201,6 +201,17 @@
               <textarea name="objetivos_especificos" id="id_objetivos_especificos" class="form-control" readonly></textarea>
               <a href="#" id="edit_objetivos" class="small text-primary">Editar</a>
             </div>
+
+            <!-- Listado de contratos cargados en esta sesión -->
+            <div class="col-12 mt-4" id="contratosCargadosWrapper" style="display:none;">
+              <h6>Contratos cargados en esta sesión:</h6>
+              <ul id="contratosCargadosList" class="list-group small"></ul>
+              <div class="mt-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="generarIndividual">Generar individual</button>
+                <button type="button" class="btn btn-outline-success btn-sm" id="generarBloque">Generar en bloque</button>
+              </div>
+            </div>
+
           </div>
         </div>
 
