@@ -1,7 +1,13 @@
+import os 
+import zipfile
+from io import BytesIO
+from django.conf import settings
+import pandas as pd
+from mailmerge import MailMerge
+from django.utils.text import slugify
 import pdfplumber
 import re
 from datetime import date
-from io import BytesIO
 
 SPANISH_MONTHS = {
     "enero":1,"febrero":2,"marzo":3,"abril":4,"mayo":5,"junio":6,
@@ -135,3 +141,80 @@ def extract_contract_metadata(pdf_file):
             metadata["objetivos_especificos"] = it["valor"]
 
     return metadata
+
+#prueba de mailmerge
+def _safe_filename(s: str) -> str:
+    if not s:
+        return "sin_numero"
+    return slugify(s)[:120]
+
+def generate_individual_package(usuario, contratos_qs, template_docx_path):
+    """
+    Genera:
+      - Un ZIP con todos los .docx generados + el Excel
+      - Se guarda únicamente el ZIP en media/usuarios/<documento>/individual/
+    🔑 El Excel y los DOCX son temporales y se eliminan después.
+    """
+    import tempfile
+    import shutil
+
+    # carpeta destino
+    base_folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    os.makedirs(base_folder, exist_ok=True)
+
+    # --- Carpeta temporal ---
+    temp_dir = tempfile.mkdtemp()
+
+    # --- Excel temporal ---
+    rows = []
+    for c in contratos_qs:
+        rows.append({
+            "NUMERO_CONTRATO": c.numero_contrato or "",
+            "FECHA_GENERACION": c.fecha_generacion or "",
+            "FECHA_INICIO": c.fecha_inicio or "",
+            "FECHA_FIN": c.fecha_fin or "",
+            "VALOR_PAGO": c.valor_pago or "",
+            "OBJETO": c.objeto or "",
+            "OBJETIVOS_ESPECIFICOS": c.objetivos_especificos or "",
+            "CONTRATO_ID": c.id,
+            "NOMBRES": usuario.nombres,
+            "APELLIDOS": usuario.apellidos,
+            "TIPO_DOCUMENTO": usuario.get_tipo_documento_display_full(),
+            "NUMERO_DOCUMENTO": usuario.numero_documento,
+            "EMAIL": usuario.email,
+        })
+    df = pd.DataFrame(rows)
+    excel_path = os.path.join(temp_dir, "contratos.xlsx")
+    df.to_excel(excel_path, index=False, engine="openpyxl")
+
+    # --- DOCX temporales ---
+    doc_paths = []
+    for row in rows:
+        nro = row.get("NUMERO_CONTRATO") or f"id{row.get('CONTRATO_ID')}"
+        out_name = f"{_safe_filename(nro)}.docx"
+        out_path = os.path.join(temp_dir, out_name)
+
+        try:
+            with MailMerge(template_docx_path) as m:
+                safe_row = {k: (v if v is not None else "") for k, v in row.items()}
+                safe_row.pop("CONTRATO_ID", None)
+                m.merge(**safe_row)
+                m.write(out_path)
+        except Exception:
+            shutil.copy(template_docx_path, out_path)
+
+        doc_paths.append(out_path)
+
+    # --- Crear ZIP (único archivo persistente) ---
+    zip_name = f"contratos_{usuario.numero_documento}.zip"
+    zip_path = os.path.join(base_folder, zip_name)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(excel_path, arcname="contratos.xlsx")
+        for p in doc_paths:
+            zf.write(p, arcname=os.path.basename(p))
+
+    # 🧹 limpiar temporales (Excel + DOCX)
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return zip_path
+

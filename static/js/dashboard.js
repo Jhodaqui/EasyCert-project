@@ -1,6 +1,6 @@
 $(document).ready(function () {
   // ==============================
-  // 1. Modal de Crear Contrato
+  // 1. Modal de Crear/Editar Contrato
   // ==============================
   const modalEl = document.getElementById('contratoModal');
   const form = document.getElementById('contratoModalForm');
@@ -9,54 +9,185 @@ $(document).ready(function () {
   const guardarOtroBtn = document.getElementById('guardarOtroBtn');
   const guardarBtn = document.querySelector("#contratoModal .btn-primary");
 
-  // Referencias a campos
   const numeroContratoInput = document.getElementById("id_numero_contrato");
   const archivoInput = document.getElementById("id_archivo");
   const archivoInputWrapper = archivoInput.closest(".col-12");
 
-  // Wrappers de campos extraídos
   const wrapperObjeto = document.getElementById("wrapper_objeto");
   const wrapperObjetivos = document.getElementById("wrapper_objetivos");
 
-  // Lista temporal de contratos cargados
-  const listaWrapper = document.getElementById("contratosCargadosWrapper");
-  const lista = document.getElementById("contratosCargadosList");
+  // ==============================
+  // Función: refrescar lista de contratos
+  // ==============================
+  async function refrescarContratosCargados(userId) {
+    try {
+      const res = await fetch(urls.verContratosBase + userId + "/");
+      const data = await res.json();
 
-  // Inicialmente ocultar campos dinámicos
+      let listaWrapper = document.getElementById("contratosCargadosWrapper");
+      if (!listaWrapper) {
+        listaWrapper = document.createElement("div");
+        listaWrapper.id = "contratosCargadosWrapper";
+        listaWrapper.classList.add("mt-4");
+        form.querySelector(".modal-body .row").appendChild(listaWrapper);
+      }
+
+      listaWrapper.innerHTML = `
+        <h6>Contratos del usuario:</h6>
+        <div class="table-responsive">${data.html}</div>
+      `;
+
+      bindAccionesContratos(userId);
+    } catch (err) {
+      console.error("Error refrescando contratos:", err);
+    }
+  }
+
+  // ==============================
+  // Acciones en tabla de contratos
+  // ==============================
+  function bindAccionesContratos(userId) {
+    // Select/Deselect all
+    const selectAll = document.getElementById("selectAllContratos");
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        document.querySelectorAll("#contratosCargadosWrapper .contrato-checkbox")
+          .forEach(cb => cb.checked = selectAll.checked);
+      });
+    }
+
+    // Generar Individual
+    const btnIndividual = document.getElementById("generarIndividual");
+    if (btnIndividual) {
+      btnIndividual.onclick = async function () {
+        const seleccionados = Array.from(document.querySelectorAll("#contratosCargadosWrapper .contrato-checkbox:checked"))
+          .map(cb => cb.value);
+
+        if (seleccionados.length === 0) {
+          alert("⚠️ Selecciona al menos un contrato.");
+          return;
+        }
+
+        try {
+          const res = await fetch(urls.generateIndividual.replace("USER_ID", userId), {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: new URLSearchParams({ selected_ids: seleccionados.join(",") })
+          });
+
+          if (!res.ok) throw new Error("Error en el servidor");
+          const blob = await res.blob();
+
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "paquete_individual.zip";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error(err);
+          alert("❌ Error generando paquete individual.");
+        }
+      };
+    }
+
+    // Generar en Bloque
+    const btnBloque = document.getElementById("generarBloque");
+    if (btnBloque) {
+      btnBloque.onclick = function () {
+        alert("📦 Aquí se generarán constancias para TODOS los contratos seleccionados (en bloque).");
+      };
+    }
+
+    // Ver contrato (modo edición)
+    document.querySelectorAll(".ver-detalle").forEach(btn => {
+      btn.addEventListener("click", async function () {
+        const contratoId = this.dataset.id;
+        try {
+          const res = await fetch(`/documents/contrato/${contratoId}/`);
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Error en servidor");
+
+          const c = data.contrato;
+          document.getElementById("id_numero_contrato").value = c.numero_contrato;
+          document.getElementById("id_fecha_inicio").value = c.fecha_inicio;
+          document.getElementById("id_fecha_generacion").value = c.fecha_generacion;
+          document.getElementById("id_fecha_fin").value = c.fecha_fin;
+          document.getElementById("id_valor_pago").value = c.valor_pago;
+
+          if (c.objeto) {
+            wrapperObjeto.style.display = "";
+            document.getElementById("id_objeto").value = c.objeto;
+          }
+          if (c.objetivos_especificos) {
+            wrapperObjetivos.style.display = "";
+            document.getElementById("id_objetivos_especificos").value = c.objetivos_especificos;
+          }
+
+          // Guardamos contrato_id oculto para que backend sepa que es edición
+          let hiddenId = document.getElementById("modal_contrato_id");
+          if (!hiddenId) {
+            hiddenId = document.createElement("input");
+            hiddenId.type = "hidden";
+            hiddenId.name = "contrato_id";
+            hiddenId.id = "modal_contrato_id";
+            form.appendChild(hiddenId);
+          }
+          hiddenId.value = contratoId;
+
+          // Cambiamos el texto del botón azul a "Actualizar"
+          guardarBtn.textContent = "Actualizar";
+
+          this.closest("tr").remove();
+          alert("📑 Contrato cargado en el formulario para edición.");
+        } catch (err) {
+          console.error(err);
+          alert("❌ Error cargando contrato");
+        }
+      });
+    });
+  }
+
+  // ==============================
+  // Inicialización modal
+  // ==============================
   archivoInputWrapper.style.display = "none";
   wrapperObjeto.style.display = "none";
   wrapperObjetivos.style.display = "none";
   guardarOtroBtn.style.display = "none";
-  if (listaWrapper) listaWrapper.style.display = "none";
 
-  // Mostrar el campo de archivo solo si el número de contrato tiene al menos 5 caracteres
   numeroContratoInput.addEventListener("input", function () {
     archivoInputWrapper.style.display = numeroContratoInput.value.length >= 5 ? "" : "none";
   });
 
-  // Abrir el modal y resetear el formulario
   document.querySelectorAll('.open-contrato-modal').forEach(btn => {
     btn.addEventListener('click', function () {
       const userId = this.dataset.userId;
       document.getElementById('modal_usuario_id').value = userId;
       form.reset();
-      modalAlerts.style.display = 'none';
 
-      // Ocultar vistas previas al abrir
+      // Reset del modal
+      modalAlerts.style.display = 'none';
       wrapperObjeto.style.display = "none";
       wrapperObjetivos.style.display = "none";
       archivoInputWrapper.style.display = "none";
-
-      // Restaurar botones
       guardarBtn.style.display = "inline-block";
+      guardarBtn.textContent = "Guardar";  // 👈 reset a Guardar
       guardarOtroBtn.style.display = "none";
+
+      // Eliminar contrato_id si había
+      const hiddenId = document.getElementById("modal_contrato_id");
+      if (hiddenId) hiddenId.remove();
 
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
+
+      refrescarContratosCargados(userId);
     });
   });
 
-  // Mostrar errores en el modal
   function showErrors(errs) {
     modalErrors.innerHTML = '';
     for (const k in errs) {
@@ -71,30 +202,7 @@ $(document).ready(function () {
   }
 
   // ==============================
-  // Función auxiliar: agregar contrato a la lista temporal
-  // ==============================
-  function enlistarContrato(fd) {
-    if (!listaWrapper || !lista) return;
-
-    listaWrapper.style.display = "";
-    const li = document.createElement("li");
-    li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
-    li.innerHTML = `
-      <span><strong>#${fd.get("numero_contrato") || "N/A"}</strong> - ${fd.get("objeto")?.substring(0,50) || "Contrato sin objeto"}...</span>
-      <button class="btn btn-sm btn-danger removeContrato">✖</button>
-    `;
-    lista.appendChild(li);
-
-    li.querySelector(".removeContrato").addEventListener("click", function () {
-      li.remove();
-      if (!lista.querySelector("li")) {
-        listaWrapper.style.display = "none";
-      }
-    });
-  }
-
-  // ==============================
-  // 1.1 Guardar contrato (azul)
+  // Guardar contrato (azul)
   // ==============================
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -114,20 +222,32 @@ $(document).ready(function () {
       return;
     }
 
-    // Actualizar tabla
     const tableContainer = document.getElementById('contratosTable');
     if (tableContainer && data.table_html) {
       tableContainer.innerHTML = data.table_html;
     }
 
-    // Enlistar contrato
-    enlistarContrato(fd);
+    const userId = document.getElementById('modal_usuario_id').value;
+    await refrescarContratosCargados(userId);
+
+    // ✅ Nuevo comportamiento si era actualización
+    if (guardarBtn.textContent === "Actualizar") {
+      form.reset();
+      wrapperObjeto.style.display = "none";
+      wrapperObjetivos.style.display = "none";
+      archivoInputWrapper.style.display = "none";
+
+      const hiddenId = document.getElementById("modal_contrato_id");
+      if (hiddenId) hiddenId.remove();
+
+      guardarBtn.textContent = "Guardar"; // volver a modo normal
+    }
 
     alert("✅ Contrato guardado correctamente.");
   });
 
   // ==============================
-  // 2. Prellenar Contrato con PDF
+  // Prellenar con PDF
   // ==============================
   archivoInput.addEventListener("change", function () {
     const file = this.files[0];
@@ -145,7 +265,6 @@ $(document).ready(function () {
       .then(data => {
         if (data.ok) {
           const m = data.metadata;
-
           document.getElementById("id_valor_pago").value = m.valor_pago || "";
           document.getElementById("id_fecha_fin").value = m.plazo_fecha || "";
 
@@ -153,16 +272,13 @@ $(document).ready(function () {
             wrapperObjeto.style.display = "";
             document.getElementById("id_objeto").value = m.objeto;
           }
-
           if (m.objetivos_especificos) {
             wrapperObjetivos.style.display = "";
             document.getElementById("id_objetivos_especificos").value = m.objetivos_especificos;
           }
 
-          // Cambiar flujo a múltiples contratos
           guardarBtn.style.display = "none";
           guardarOtroBtn.style.display = "inline-block";
-
         } else {
           alert("⚠️ No se pudo procesar el PDF: " + data.error);
         }
@@ -174,24 +290,19 @@ $(document).ready(function () {
   });
 
   // ==============================
-  // 2.1 Habilitar edición manual
+  // Habilitar edición manual
   // ==============================
-  document.getElementById("edit_objeto").addEventListener("click", function (e) {
+  document.getElementById("edit_objeto").addEventListener("click", e => {
     e.preventDefault();
-    const campo = document.getElementById("id_objeto");
-    campo.removeAttribute("readonly");
-    campo.focus();
+    document.getElementById("id_objeto").removeAttribute("readonly");
   });
-
-  document.getElementById("edit_objetivos").addEventListener("click", function (e) {
+  document.getElementById("edit_objetivos").addEventListener("click", e => {
     e.preventDefault();
-    const campo = document.getElementById("id_objetivos_especificos");
-    campo.removeAttribute("readonly");
-    campo.focus();
+    document.getElementById("id_objetivos_especificos").removeAttribute("readonly");
   });
 
   // ==============================
-  // 2.2 Guardar y cargar otro (verde)
+  // Guardar y cargar otro (verde)
   // ==============================
   guardarOtroBtn.addEventListener('click', async function () {
     modalAlerts.style.display = 'none';
@@ -215,116 +326,14 @@ $(document).ready(function () {
       tableContainer.innerHTML = data.table_html;
     }
 
-    enlistarContrato(fd);
+    const userId = document.getElementById('modal_usuario_id').value;
+    await refrescarContratosCargados(userId);
 
-    // Resetear para otro contrato
     form.reset();
     wrapperObjeto.style.display = "none";
     wrapperObjetivos.style.display = "none";
     archivoInputWrapper.style.display = "none";
 
     alert("Contrato guardado. Ahora puedes subir otro.");
-  });
-
-  // ==============================
-  // 3. Ver Contratos del Usuario
-  // ==============================
-  document.querySelectorAll(".ver-contratos").forEach(btn => {
-    btn.addEventListener("click", function () {
-      const userId = this.dataset.user;
-      const modalBody = document.getElementById("contratosModalBody");
-
-      modalBody.innerHTML = "<p class='text-muted'>Cargando contratos...</p>";
-
-      fetch(urls.verContratosBase + userId + "/")
-        .then(res => res.json())
-        .then(data => {
-          modalBody.innerHTML = data.html;
-        })
-        .catch(err => {
-          modalBody.innerHTML = "<p class='text-danger'>Error al cargar contratos.</p>";
-        });
-    });
-  });
-
-  // ==============================
-  // 4. Filtros y Búsqueda
-  // ==============================
-  const filterSelects = document.querySelectorAll('.filter-select');
-  const searchInput = document.getElementById('searchInput');
-  const applyBtn = document.getElementById('applyFilters');
-  const rows = document.querySelectorAll('.solicitud-row');
-
-  function aplicarFiltros() {
-    const tipoValue = document.getElementById('tipoFilter').value;
-    const estadoValue = document.getElementById('estadoFilter').value;
-    const fechaValue = document.getElementById('fechaFilter').value;
-    const searchValue = searchInput.value.toLowerCase();
-
-    const hoy = new Date();
-
-    rows.forEach(row => {
-      let mostrar = true;
-      const tipo = row.getAttribute('data-tipo');
-      const estado = row.getAttribute('data-estado');
-      const fechaStr = row.getAttribute('data-fecha');
-      const fecha = new Date(fechaStr);
-      const textoFila = row.textContent.toLowerCase();
-
-      if (tipoValue && tipo !== tipoValue) mostrar = false;
-      if (estadoValue && estado !== estadoValue) mostrar = false;
-
-      if (fechaValue === 'hoy') {
-        const esHoy = fecha.getDate() === hoy.getDate() &&
-          fecha.getMonth() === hoy.getMonth() &&
-          fecha.getFullYear() === hoy.getFullYear();
-        if (!esHoy) mostrar = false;
-      } else if (fechaValue === 'semana') {
-        const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
-        if (fecha < inicioSemana) mostrar = false;
-      } else if (fechaValue === 'mes') {
-        if (fecha.getMonth() !== hoy.getMonth() || fecha.getFullYear() !== hoy.getFullYear()) {
-          mostrar = false;
-        }
-      }
-
-      if (searchValue && !textoFila.includes(searchValue)) {
-        mostrar = false;
-      }
-
-      row.style.display = mostrar ? '' : 'none';
-    });
-
-    const visibles = document.querySelectorAll('.solicitud-row:not([style*="display: none"])');
-    const badge = document.querySelector('.badge-count');
-    if (badge) {
-      badge.textContent = `${visibles.length} solicitudes`;
-    }
-  }
-
-  applyBtn.addEventListener('click', function () {
-    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
-    setTimeout(() => {
-      aplicarFiltros();
-      this.innerHTML = '<i class="fas fa-check"></i> Filtros Aplicados';
-      setTimeout(() => {
-        this.innerHTML = '<i class="fas fa-filter"></i> Aplicar Filtros';
-      }, 2000);
-    }, 500);
-  });
-
-  searchInput.addEventListener('input', aplicarFiltros);
-  filterSelects.forEach(select => select.addEventListener('change', aplicarFiltros));
-
-  // ==============================
-  // 5. Acciones sobre lista cargada
-  // ==============================
-  document.getElementById("generarIndividual").addEventListener("click", function () {
-    alert("Aquí podrás seleccionar un contrato específico para generar constancia.");
-  });
-
-  document.getElementById("generarBloque").addEventListener("click", function () {
-    alert("Aquí se generarán constancias para TODOS los contratos enlistados.");
   });
 });

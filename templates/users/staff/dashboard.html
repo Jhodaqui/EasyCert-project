@@ -82,6 +82,7 @@
               <th>Documento</th>
               {% comment %} <th>Email</th> {% endcomment %}
               {% comment %} <th>Fecha Solicitud</th> {% endcomment %}
+              <th>Comentario</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -91,6 +92,7 @@
             <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
               <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
               <td>{{ s.usuario.numero_documento }}</td>
+              <td>{{ s.usuario. }}</td>
               {% comment %} <td>{{ s.usuario.email }}</td> {% endcomment %}
               {% comment %} <td>{{ s.creado_en|date:"d/m/Y" }}</td> {% endcomment %}
               <td>
@@ -100,17 +102,17 @@
                 {% comment %} <a href="{% url 'documents:upload_pdf' s.usuario.id %}" class="btn-action" title="Subir PDF">
                   <i class="fas fa-upload"></i>
                 </a> {% endcomment %}
-                <button type="button" class=" open-contrato-modal" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
+                <button type="button" class="open-contrato-modal apply-filters-btn" data-user-id="{{ s.usuario.id }}" title="Subir/Crear Contrato">
                 {% comment %} <i class="fas fa-file-pdf"></i> {% endcomment %}Gestionar Solicitud
                 </button>
-                <a href="#" 
+                {% comment %} <a href="#" 
                   class="btn-action ver-contratos" 
                   data-user="{{ s.usuario.id }}" 
                   data-bs-toggle="modal" 
                   data-bs-target="#contratosModal"
                   title="Ver contratos">
                   <i class="fas fa-file-contract"></i>
-                </a>
+                </a> {% endcomment %}
                 {% comment %} <a href="{% url 'certificates:manual_fields' s.usuario.id %}" class="btn-action" title="Editar">
                   <i class="fas fa-edit"></i>
                 </a>
@@ -201,17 +203,6 @@
               <textarea name="objetivos_especificos" id="id_objetivos_especificos" class="form-control" readonly></textarea>
               <a href="#" id="edit_objetivos" class="small text-primary">Editar</a>
             </div>
-
-            <!-- Listado de contratos cargados en esta sesión -->
-            <div class="col-12 mt-4" id="contratosCargadosWrapper" style="display:none;">
-              <h6>Contratos cargados en esta sesión:</h6>
-              <ul id="contratosCargadosList" class="list-group small"></ul>
-              <div class="mt-2">
-                <button type="button" class="btn btn-outline-primary btn-sm" id="generarIndividual">Generar individual</button>
-                <button type="button" class="btn btn-outline-success btn-sm" id="generarBloque">Generar en bloque</button>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -247,7 +238,8 @@
   const urls = {
     contratoCreate: "{% url 'documents:contrato_create_modal' %}",
     prefillContrato: "{% url 'documents:prefill_contrato' %}",
-    verContratosBase: "/documents/contratos/"  // se concatena luego con el ID
+    verContratosBase: "/documents/contratos/",  // se concatena luego con el ID
+    generateIndividual: "{% url 'documents:generate_individual' 0 %}".replace("0", "USER_ID")
   };
 </script>
 {% comment %} Importamos el js {% endcomment %}
