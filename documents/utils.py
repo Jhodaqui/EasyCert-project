@@ -71,19 +71,45 @@ def _clean_plazo_text(text):
 def _normalize_objeto(text):
     """
     Limpia y organiza el texto del OBJETO:
-    - Mantiene saltos de línea si existen
-    - Quita espacios dobles y numeraciones rotas
-    - Convierte en párrafos claros
+    - Separa por puntos, punto y coma o frases clave en mayúscula
+    - Convierte a párrafos legibles
     """
     if not text:
         return ""
     # Normalizar saltos
-    s = text.replace("\r\n", "\n").replace("\r", "\n")
-    # Quitar múltiple espacios
+    s = text.replace("\r\n", "\n").replace("\r", "\n").strip()
+    # Quitar espacios múltiples
     s = re.sub(r'\s+', ' ', s)
-    # Restaurar saltos antes de palabras clave típicas
-    s = re.sub(r'(,)\s+', r'\1\n', s)  
-    return s.strip()
+
+    # Forzar salto de línea en separadores comunes
+    s = re.sub(r'(\.)(\s+)', r'\1\n', s)          # después de puntos
+    s = re.sub(r'(;)(\s+)', r'\1\n', s)           # después de ;
+    s = re.sub(r'\s+(EDUCACI[oÓ]N|EXPERIENCIA|FORMACI[oÓ]N)\s+', r'\n\1 ', s, flags=re.I)
+
+    # Limpiar espacios al inicio de cada línea
+    lines = [ln.strip() for ln in s.split("\n") if ln.strip()]
+    return "\n".join(lines)
+
+def _extract_objeto(texto):
+    """
+    Extrae el OBJETO con formato parecido al de las obligaciones.
+    Intenta separar por frases largas o numeraciones.
+    """
+    if not texto:
+        return ""
+
+    # Compactar espacios y saltos
+    s = re.sub(r'\s+', ' ', texto).strip()
+
+    # Forzar saltos después de ; o .
+    s = re.sub(r'([.;:])\s+', r'\1\n', s)
+
+    # Saltos antes de palabras clave
+    s = re.sub(r'\s+(EDUCACI[oÓ]N|FORMACI[oÓ]N|EXPERIENCIA)\s+', r'\n\1 ', s, flags=re.I)
+
+    # Quitar espacios basura en cada línea
+    lines = [ln.strip() for ln in s.split("\n") if ln.strip()]
+    return "\n".join(lines)
 
 def extract_key_value_from_pdf(pdf_file):
     out = []
@@ -96,7 +122,7 @@ def extract_key_value_from_pdf(pdf_file):
             full_text, re.I | re.S
         )
         if match_objeto:
-            objeto_text = _normalize_objeto(match_objeto.group(1))
+            objeto_text = _extract_objeto(match_objeto.group(1))
             out.append({"clave": "Objeto", "valor": objeto_text})
 
         # ===== VALOR =====
@@ -226,7 +252,7 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
 
     # --- DOCX temporales ---
     doc_paths = []
-    for row in rows:
+    for row, contrato in zip(rows, contratos_qs):
         nro = row.get("NUMERO_CONTRATO") or f"id{row.get('CONTRATO_ID')}"
         out_name = f"{_safe_filename(nro)}.docx"
         out_path = os.path.join(temp_dir, out_name)
@@ -235,6 +261,10 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
             with MailMerge(template_docx_path) as m:
                 safe_row = {k: (v if v is not None else "") for k, v in row.items()}
                 safe_row.pop("CONTRATO_ID", None)
+
+                # 👇 Aquí sobreescribimos el objeto solo para Word con saltos
+                safe_row["OBJETO"] = _clean_multiline_text(contrato.objeto)
+
                 m.merge(**safe_row)
                 m.write(out_path)
         except Exception:
