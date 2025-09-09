@@ -1551,6 +1551,7 @@ h6 { font-size: 1rem; }
             font-size: 48px;
         }
     }
+    
 /* añadido para mostrar campos readonly */
 .readonly-field {
   background-color: #f8f9fa;
@@ -1561,3 +1562,56 @@ h6 { font-size: 1rem; }
   box-shadow: none;
   outline: none;
 }
+
+/*  css de reset password  */
+  body {
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+  }
+  .reset-container {
+    max-width: 400px;
+    margin: 80px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  .reset-container h2 {
+    text-align: center;
+    color: #39A900;
+    margin-bottom: 20px;
+  }
+  .reset-container label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  .reset-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+  .reset-container input[type="password"]:focus {
+    border-color: #39A900;
+    box-shadow: 0 0 5px #39A900;
+    outline: none;
+  }
+  .reset-container button {
+    width: 100%;
+    background: #39A900;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease;
+  }
+  .reset-container button:hover {
+    background: #2f8700;
+  }

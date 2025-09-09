@@ -20,6 +20,13 @@ import pandas as pd
 from .models import CustomUser, Constancia
 from datetime import date
 
+# correo 
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Create your views here.
 
 # Registro
@@ -28,18 +35,40 @@ def register_view(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = True  # Ya no requiere activación
+            user.is_active = True  # ya no requiere activación
             user.save()
 
-            crear_CarpetasUsuario(user)
+            crear_CarpetasUsuario(user)  # <-- Esto ya lo tienes, no se toca
 
-            messages.success(request, "Usuario registrado con éxito. Ya puedes iniciar sesión.")
+            #  --- envío de correo ---
+            try:
+                subject = "Bienvenido al sistema de certificaciones"
+                from_email = settings.EMAIL_HOST_USER
+                to_email = [user.email]
+
+                text_content = f"Hola {user.nombres}, tu registro en el sistema de certificaciones fue exitoso."
+                html_content = f"""
+                    <p>Hola <strong>{user.nombres}</strong>,</p>
+                    <p>Tu registro en <strong>el sistema de certificaciones</strong> fue exitoso.</p>
+                    <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
+                """
+
+                msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
+
+                messages.success(request, "Usuario registrado con éxito. Se envió un correo de bienvenida.")
+            except Exception as e:
+                logger.error(f"Error enviando correo de bienvenida: {e}")
+                messages.warning(request, "Usuario registrado, pero no se pudo enviar el correo de bienvenida.")
+
             return redirect("login")
         else:
             messages.error(request, "Corrige los errores del formulario.")
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
+# fin del correo 
 
 # Login
 def login_view(request):
@@ -106,9 +135,16 @@ def password_reset_request_view(request):
             token = default_token_generator.make_token(user)
             reset_link = request.build_absolute_uri(f"/users/reset/{uid}/{token}/")
             subject = "Restablecer contraseña EasyCert"
-            message = render_to_string("users/emails/password_reset_email.txt", {"user": user, "reset_link": reset_link})
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-            messages.success(request, "Se envió un enlace para restablecer la contraseña (revisa la consola en desarrollo).")
+            message = render_to_string("users/emails/password_reset_email.html", {"user": user, "reset_link": reset_link})
+            send_mail(
+                subject,
+                "Versión de texto plano: copia y pega este enlace para restablecer tu contraseña: " + reset_link,  # respaldo en texto
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+                html_message=message  # 👈 clave para que el correo se vea con estilos
+            )
+            messages.success(request, "Se envió un enlace para restablecer la contraseña.")
             return redirect("login")
     else:
         form = PasswordResetRequestForm()

@@ -121,3 +121,4 @@ def generar_constancia_view(request, user_id):
         "usuario": usuario,
         "user_data": {d.campo: d.valor for d in user_data}
     })
+

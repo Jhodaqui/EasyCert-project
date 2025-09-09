@@ -138,8 +138,8 @@ MESSAGE_TAGS = {
 }
 
 # Para desarrollo: imprime el correo en la consola
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "noreply@easycert.com"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# DEFAULT_FROM_EMAIL = "noreply@easycert.com"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -157,3 +157,18 @@ import os
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+
+# Para desarrollo: imprime el correo en la consola
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@easycert.com"
+
+#  funcionamineto de correo y que envie al gmail del usuario
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "juanbaldes6969@gmail.com"
+EMAIL_HOST_PASSWORD = "gbes nksf sdmw blrw"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# fin de correo
+
