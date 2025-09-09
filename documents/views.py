@@ -18,10 +18,11 @@ from django.conf import settings
 # para pruebas de pdf
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.units import cm
+
 
 def generar_certificado(request):
     response = HttpResponse(content_type='application/pdf')
@@ -41,13 +42,28 @@ def generar_certificado(request):
 
     elementos = []
 
+    # ---------------- LOGO ----------------
+    ruta_logo = os.path.join(settings.BASE_DIR, "static", "img", "logo-sena-verde.jpg")
+    try:
+        logo = Image(ruta_logo, width=2*cm, height=2*cm)  # tamaño ajustable
+        logo.hAlign = "CENTER"
+
+        t_logo = Table([[logo]], colWidths=[6*cm])
+        t_logo.hAlign = "CENTER"
+        t_logo.setStyle(TableStyle([
+        ("BOX", (0,0), (-1,-1), 1, "black"),
+        ("ALIGN", (0,0), (-1,-1), "CENTER"),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+        ]))
+        elementos.append(t_logo)
+        elementos.append(Spacer(1, 15))
+    except Exception as e:
+        elementos.append(Paragraph(f"[Error cargando logo: {e}]", styles["Texto"]))
+
     # ---------------- ENCABEZADO ----------------
     encabezado = [[Paragraph("Certificación 079", styles["Titulo"])]]
     t_encabezado = Table(encabezado, colWidths=[15*cm])
-    t_encabezado.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, "black"),
-        ("ALIGN", (0,0), (-1,-1), "CENTER")
-    ]))
+    t_encabezado.setStyle(TableStyle([("BOX", (0,0), (-1,-1), 1, "black")]))
     elementos.append(t_encabezado)
     elementos.append(Spacer(1, 10))
 
