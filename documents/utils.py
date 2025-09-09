@@ -60,15 +60,30 @@ def _format_amount(valor_num: str) -> str:
         return valor_num
 
 def _clean_plazo_text(text):
-    """Extrae solo la fecha del plazo en formato 'DD DE MES DE YYYY'."""
+    """Extrae y devuelve la fecha del plazo tal cual como texto (sin convertir a date)."""
     if not text:
         return ""
-
     m = re.search(r"\d{1,2}\s+DE\s+[A-ZÁÉÍÓÚÑ]+\s+DE\s+\d{4}", text, re.I)
     if m:
         return m.group(0).strip()
-
     return text.strip()
+
+def _normalize_objeto(text):
+    """
+    Limpia y organiza el texto del OBJETO:
+    - Mantiene saltos de línea si existen
+    - Quita espacios dobles y numeraciones rotas
+    - Convierte en párrafos claros
+    """
+    if not text:
+        return ""
+    # Normalizar saltos
+    s = text.replace("\r\n", "\n").replace("\r", "\n")
+    # Quitar múltiple espacios
+    s = re.sub(r'\s+', ' ', s)
+    # Restaurar saltos antes de palabras clave típicas
+    s = re.sub(r'(,)\s+', r'\1\n', s)  
+    return s.strip()
 
 def extract_key_value_from_pdf(pdf_file):
     out = []
@@ -81,7 +96,7 @@ def extract_key_value_from_pdf(pdf_file):
             full_text, re.I | re.S
         )
         if match_objeto:
-            objeto_text = match_objeto.group(1).strip()
+            objeto_text = _normalize_objeto(match_objeto.group(1))
             out.append({"clave": "Objeto", "valor": objeto_text})
 
         # ===== VALOR =====
@@ -96,7 +111,7 @@ def extract_key_value_from_pdf(pdf_file):
                 valor_fmt = f"{int(valor_num):,}".replace(",", ".")
                 out.append({"clave": "Valor de Pago", "valor": valor_fmt})
 
-        # ===== PLAZO (solo fecha limpia) =====
+        # ===== PLAZO =====
         match_plazo = re.search(
             r"PLAZO[:\s]*(.*?)(LUGAR|SUPERVISOR|ORDENADOR|$)",
             full_text, re.I | re.S
@@ -112,10 +127,11 @@ def extract_key_value_from_pdf(pdf_file):
             full_text, re.S | re.I
         )
         if match_objetivos:
-            objetivos_text = match_objetivos.group(2).strip()
+            objetivos_text = " ".join(match_objetivos.group(2).split())
             out.append({"clave": "Objetivos Específicos", "valor": objetivos_text})
 
     return out
+
 
 def extract_contract_metadata(pdf_file):
     items = extract_key_value_from_pdf(pdf_file)
@@ -123,7 +139,6 @@ def extract_contract_metadata(pdf_file):
     metadata = {
         "objeto": "",
         "valor_pago": "",
-        "valor_pago_raw": "",
         "plazo_fecha": "",
         "objetivos_especificos": "",
     }
@@ -133,8 +148,7 @@ def extract_contract_metadata(pdf_file):
         if "objeto" in k:
             metadata["objeto"] = it["valor"]
         elif "valor" in k:
-            metadata["valor_pago"] = it["valor"]      # 2.472.000
-            metadata["valor_pago_raw"] = it.get("raw", "")  # 2472000
+            metadata["valor_pago"] = it["valor"]
         elif "plazo" in k:
             metadata["plazo_fecha"] = it["valor"]
         elif "objetivo" in k:
@@ -148,12 +162,35 @@ def _safe_filename(s: str) -> str:
         return "sin_numero"
     return slugify(s)[:120]
 
+def _clean_multiline_text(raw):
+    """
+    Convierte texto en varias líneas (separadas por \n) que Word MailMerge puede
+    mostrar en lista si el campo tiene formato de lista en el docx.
+    """
+    if not raw:
+        return ""
+    s = str(raw).replace("\r\n", "\n").replace("\r", "\n")
+    lines = [re.sub(r'\s+', ' ', ln).strip() for ln in s.split("\n")]
+    lines = [ln for ln in lines if ln]
+    return "\n".join(lines)
+
+def _format_as_singleline(raw):
+    """
+    Convierte texto multilínea en una sola línea corrida,
+    respetando el formato de párrafo justificado en Word.
+    """
+    if not raw:
+        return ""
+    s = str(raw).replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    # Colapsar espacios múltiples
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
 def generate_individual_package(usuario, contratos_qs, template_docx_path):
     """
     Genera:
       - Un ZIP con todos los .docx generados + el Excel
       - Se guarda únicamente el ZIP en media/usuarios/<documento>/individual/
-    🔑 El Excel y los DOCX son temporales y se eliminan después.
     """
     import tempfile
     import shutil
@@ -170,19 +207,19 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
     for c in contratos_qs:
         rows.append({
             "NUMERO_CONTRATO": c.numero_contrato or "",
-            "FECHA_GENERACION": c.fecha_generacion or "",
-            "FECHA_INICIO": c.fecha_inicio or "",
-            "FECHA_FIN": c.fecha_fin or "",
-            "VALOR_PAGO": c.valor_pago or "",
-            "OBJETO": c.objeto or "",
-            "OBJETIVOS_ESPECIFICOS": c.objetivos_especificos or "",
+            "FECHA_GENERACION": str(c.fecha_generacion or "").strip(),
+            "FECHA_INICIO": str(c.fecha_inicio or "").strip(),
+            "FECHA_FINAL": str(c.fecha_fin or "").strip(),
+            "VALOR_PAGO": str(c.valor_pago or "").strip(),
+            "OBJETO": _format_as_singleline(c.objeto),
+            "OBJETIVOS_ESPECIFICOS": _clean_multiline_text(c.objetivos_especificos),
             "CONTRATO_ID": c.id,
-            "NOMBRES": usuario.nombres,
-            "APELLIDOS": usuario.apellidos,
+            "NOMBRE_COMPLETO": f"{usuario.nombres or ''} {usuario.apellidos or ''}".strip(),
             "TIPO_DOCUMENTO": usuario.get_tipo_documento_display_full(),
-            "NUMERO_DOCUMENTO": usuario.numero_documento,
-            "EMAIL": usuario.email,
+            "NUMERO_DOCUMENTO": usuario.numero_documento or "",
+            "EMAIL": usuario.email or "",
         })
+
     df = pd.DataFrame(rows)
     excel_path = os.path.join(temp_dir, "contratos.xlsx")
     df.to_excel(excel_path, index=False, engine="openpyxl")
@@ -205,7 +242,7 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
 
         doc_paths.append(out_path)
 
-    # --- Crear ZIP (único archivo persistente) ---
+    # --- Crear ZIP ---
     zip_name = f"contratos_{usuario.numero_documento}.zip"
     zip_path = os.path.join(base_folder, zip_name)
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -213,8 +250,8 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
         for p in doc_paths:
             zf.write(p, arcname=os.path.basename(p))
 
-    # 🧹 limpiar temporales (Excel + DOCX)
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     return zip_path
+
 

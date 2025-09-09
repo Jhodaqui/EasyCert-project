@@ -90,7 +90,7 @@ def contrato_create_modal(request):
     if contrato_id:
         instance = get_object_or_404(Contrato, id=contrato_id, usuario=usuario)
 
-    form = ContratoModalForm(request.POST, request.FILES, instance=instance)
+    form = ContratoModalForm(request.POST, request.FILES, instance=instance, initial={"usuario": usuario})
     if not form.is_valid():
         return JsonResponse({"ok": False, "errors": form.errors}, status=400)
 
@@ -136,8 +136,6 @@ def contrato_create_modal(request):
 
     except Exception as e:
         return JsonResponse({"ok": False, "errors": {"__all__": [str(e)]}}, status=500)
-
-
 
 @csrf_exempt
 @require_POST
