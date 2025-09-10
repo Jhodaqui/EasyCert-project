@@ -87,12 +87,24 @@ h6 { font-size: 1rem; }
     transition: var(--transition);
     gap: 8px;
 }
-
+/* colores de los botones de la dashboard de la asesora */
 .btn-primary {
     background: linear-gradient(135deg, var(--color-secondary) 0%, #00304D 100%);
     color: white;
     box-shadow: 0 4px 10px rgba(74, 108, 247, 0.3);
 }
+.btn-secondary {
+   background-color: #2f8700;
+    color: white;
+    box-shadow: 0 4px 10px rgba(47, 135, 0, 0.3);   
+}
+
+.btn-tercery {
+ background-color: #721c24;
+    color: white;
+    box-shadow: 0 4px 10px rgba(114, 28, 36, 0.3);  
+}
+/* fin de los botones de la dashboard de la asesora */
 
 .btn-primary:hover {
     background: linear-gradient(135deg, #00304D 0%, #00304D 100%);
@@ -580,11 +592,7 @@ h6 { font-size: 1rem; }
     font-weight: 600;
 }
 
-.table-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 2fr));
-    gap: 10px;
-}
+
 
 .certificate-card {
     background: white;
@@ -697,6 +705,8 @@ h6 { font-size: 1rem; }
   .action-buttons {
     display: flex;
     gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
   
   .btn-action {
