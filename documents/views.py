@@ -24,121 +24,169 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.utils import ImageReader
 
 # Definir tamaño carta (Letter)
 LETTER = (612, 792)  # 21,59cm x 27,94cm
 
 def generar_certificado(request):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="certificado.pdf"'
-
-    # 🔤 Registrar fuente Calibri
+    usuario = get_object_or_404(CustomUser, id=103)  # Usuario de prueba
+    contrato = get_object_or_404(Contrato, id=25, usuario=usuario)  # Contrato de prueba
+    
+    # Fuente Calibri
     ruta_fuente = os.path.join(settings.BASE_DIR, "static", "fonts", "calibri.ttf")
     pdfmetrics.registerFont(TTFont("Calibri", ruta_fuente))
 
-    # 📄 Documento sin márgenes → control total
-    doc = SimpleDocTemplate(response, pagesize=LETTER,
-                            leftMargin=0, rightMargin=0,
-                            topMargin=0, bottomMargin=0)
+        # Registrar fuentes Calibri
+    ruta_fuente = os.path.join(settings.BASE_DIR, "static", "fonts")
+    pdfmetrics.registerFont(TTFont("Calibri", os.path.join(ruta_fuente, "calibri.ttf")))
+    pdfmetrics.registerFont(TTFont("Calibri-Bold", os.path.join(ruta_fuente, "calibrib.ttf")))
+    pdfmetrics.registerFont(TTFont("Calibri-Italic", os.path.join(ruta_fuente, "calibrii.ttf")))
+    pdfmetrics.registerFont(TTFont("Calibri-BoldItalic", os.path.join(ruta_fuente, "calibriz.ttf")))
+    
+    tituloInicial = "<b>EL SUSCRITO SUBDIRECTOR (E) DEL SERVICIO NACIONAL DE APRENDIZAJE SENA</b>"
+    introduccion = f"""Que el (la) señor(a) {usuario.nombres} {usuario.apellidos} identificado(a) con 
+    {usuario.tipo_documento} No. {usuario.numero_documento} de Popayán celebró con EL SERVICIO NACIONAL DE APRENDIZAJE SENA, 
+    el (los) siguiente(s) contrato(s) de prestación de servicios personales regulados por la Ley 80 de 1993, 
+    Ley 1150 de 2007 y Decreto 1082 de 2015, como se describe a continuación:"""
+    
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="certificado.pdf"'
 
-    # 🎨 Estilos
+    # Documento Letter con márgenes definidos
+    doc = SimpleDocTemplate(response, pagesize=LETTER,
+                            leftMargin=3*cm, rightMargin=3*cm,
+                            topMargin=3*cm, bottomMargin=2.5*cm)
+
+    # Estilos
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="Certificacion", fontName="Calibri", fontSize=11,
-                              alignment=TA_LEFT, spaceAfter=15, italic=True))
-    styles.add(ParagraphStyle(name="SubtituloCalibri", fontName="Calibri", fontSize=14,
+    styles.add(ParagraphStyle(name="Certificacion", fontName="Calibri-Italic", fontSize=11,
+                              alignment=TA_LEFT, spaceAfter=15))
+    styles.add(ParagraphStyle(name="SubtituloCalibri", fontName="Calibri-Bold", fontSize=14,
                               alignment=TA_CENTER, spaceAfter=12, leading=16))
     styles.add(ParagraphStyle(name="IntroCalibri", fontName="Calibri", fontSize=11,
                               alignment=TA_JUSTIFY, leading=15))
-    styles.add(ParagraphStyle(name="TablaTitulo", fontName="Calibri", fontSize=11,
+    styles.add(ParagraphStyle(name="TablaTitulo", fontName="Calibri-Bold", fontSize=11,
                               alignment=TA_LEFT, spaceAfter=3, leading=13))
     styles.add(ParagraphStyle(name="TablaTexto", fontName="Calibri", fontSize=11,
                               alignment=TA_LEFT, leading=13))
-    styles.add(ParagraphStyle(name="Firma", fontName="Calibri", fontSize=11,
-                              alignment=TA_CENTER, spaceBefore=30))
+    styles.add(ParagraphStyle(name="FirmaPrincipal", fontName="Calibri", fontSize=11,
+                              alignment=TA_LEFT, leading=14))
+    styles.add(ParagraphStyle(name="FirmaSecundaria", fontName="Calibri", fontSize=10,
+                              alignment=TA_LEFT, leading=12))
 
     elementos = []
 
-    # ---------------- ENCABEZADO ----------------
-    ruta_logo = os.path.join(settings.BASE_DIR, "static", "img", "logo-sena-verde.jpg")
-    logo = Image(ruta_logo, width=2*cm, height=2*cm)
-    logo.hAlign = "CENTER"
-
-    encabezado = Table([
-        [logo],
-        [Paragraph("<i>Certificación No. 001</i>", styles["Certificacion"])]
-    ], colWidths=[LETTER[0] - (2.5*cm)])
-    encabezado.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, "red"),  # borde de guía
-        ("ALIGN", (0,0), (-1,0), "CENTER"),
-        ("VALIGN", (0,0), (-1,0), "MIDDLE"),
-        ("ALIGN", (0,1), (-1,1), "LEFT"),
-        ("LEFTPADDING", (0,1), (-1,1), 1.25*cm),  # margen encabezado
-    ]))
-    elementos.append(encabezado)
-    elementos.append(Spacer(1, 20))
-
     # ---------------- SUBTÍTULOS ----------------
-    subtitulo = Table([[Paragraph(
-        "EL SUSCRITO SUBDIRECTOR (E) DEL SERVICIO NACIONAL DE APRENDIZAJE SENA",
-        styles["SubtituloCalibri"]
-    )]], colWidths=[LETTER[0] - (6*cm)])
-    elementos.append(subtitulo)
-
-    constar = Table([[Paragraph("HACE CONSTAR", styles["SubtituloCalibri"])]],
-                    colWidths=[LETTER[0] - (6*cm)])
-    elementos.append(constar)
+    elementos.append(Paragraph(
+        tituloInicial,
+        styles["SubtituloCalibri"]))
+    elementos.append(Paragraph("<b>HACE CONSTAR</b>", styles["SubtituloCalibri"]))
     elementos.append(Spacer(1, 15))
 
     # ---------------- INTRO ----------------
-    intro = """Que el (la) señor(a) <b>MAKENLY TAFURT CARDONA</b> identificado(a) con 
-    C.C. No. 1061709754 de Popayán celebró con EL SERVICIO NACIONAL DE APRENDIZAJE SENA, 
-    el (los) siguiente(s) contrato(s) de prestación de servicios personales regulados por la Ley 80 de 1993, 
-    Ley 1150 de 2007 y Decreto 1082 de 2015, como se describe a continuación:"""
-
-    t_intro = Table([[Paragraph(intro, styles["IntroCalibri"])]],
-                    colWidths=[LETTER[0] - (6*cm)])
-    t_intro.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, "blue"),  # solo guía
-    ]))
-    elementos.append(t_intro)
+    intro = introduccion
+    elementos.append(Paragraph(intro, styles["IntroCalibri"]))
     elementos.append(Spacer(1, 15))
 
     # ---------------- TABLA DE DATOS ----------------
     data = [
         [Paragraph("Número y Fecha del Contrato:", styles["TablaTitulo"]),
-        Paragraph("CO1.PCCNTR.5762544 del 18 de enero del 2024", styles["TablaTexto"])],
+         Paragraph( f"{contrato.numero_contrato} del {contrato.fecha_generacion}", styles["TablaTexto"])],
         [Paragraph("Objeto:", styles["TablaTitulo"]),
-        Paragraph("Prestar los servicios profesionales para apoyar el monitoreo, gestión y fortalecimiento de los Sistemas de Gestión Ambiental y de Eficiencia Energética bajo las Normas Técnicas ISO 14001 e ISO 50001.", styles["TablaTexto"])],
+         Paragraph(f"{contrato.objeto}", styles["TablaTexto"])],
         [Paragraph("Plazo de ejecución:", styles["TablaTitulo"]),
-        Paragraph("Del 19 de enero del 2024 al 31 de diciembre del 2024", styles["TablaTexto"])],
+         Paragraph(f"{contrato.fecha_inicio} al {contrato.fecha_fin}", styles["TablaTexto"])],
         [Paragraph("Fecha de Inicio de Ejecución:", styles["TablaTitulo"]),
-        Paragraph("19 de enero del 2024", styles["TablaTexto"])],
+         Paragraph(f"{contrato.fecha_inicio}", styles["TablaTexto"])],
         [Paragraph("Fecha de Terminación del Contrato:", styles["TablaTitulo"]),
-        Paragraph("31 de diciembre del 2024", styles["TablaTexto"])],
+         Paragraph(f"{contrato.fecha_fin}", styles["TablaTexto"])],
         [Paragraph("Valor:", styles["TablaTitulo"]),
-        Paragraph("$27.192.000 (VEINTISIETE MILLONES CIENTO NOVENTA Y DOS MIL PESOS M/CTE)", styles["TablaTexto"])],
+         Paragraph(f"El valor del contrato para todos los efectos legales y fiscales, se fijó en la suma de ${contrato.valor_pago} (cuantía del contrato)", styles["TablaTexto"])],
+        [Paragraph("Obligaciones Específicas:", styles["TablaTitulo"]),
+         Paragraph(f"""{contrato.objetivos_especificos}""", styles["TablaTexto"])]
     ]
-    tabla = Table(data, colWidths=[6*cm, (LETTER[0] - (6*cm)) - 6*cm])
+    tabla = Table(data, colWidths=[6*cm, (LETTER[0] - 6*cm - 6*cm)])
     tabla.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, "blue"),  # solo guía
         ("VALIGN", (0,0), (-1,-1), "TOP"),
     ]))
     elementos.append(tabla)
+    elementos.append(Spacer(1, 15))
 
-    # ---------------- PIE DE PÁGINA ----------------
-    pie = [[Paragraph(
-        "⭑ Margen Pie de Página (1.56 cm)<br/>Regional Cauca / Centro de Formación Agropecuario<br/>Carrera 9ª 71N–60 B/ El Placer, Popayán – Cauca. PBX 57 602 8247678 Ext:2224",
-        styles["IntroCalibri"]
-    )]]
-    t_pie = Table(pie, colWidths=[LETTER[0]])
-    t_pie.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, "green"),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 1.56*cm),
+    # ---------------- EXPEDICIÓN ----------------
+    expedicion = """Se expide a solicitud del interesado(a), de acuerdo con la información registrada en los sistemas de información con los que cuenta el SENA, a los diez (10) días de febrero de 2025."""
+    elementos.append(Paragraph(expedicion, styles["IntroCalibri"]))
+    elementos.append(Spacer(1, 30))
+
+    # ---------------- FIRMAS ----------------
+    firmas = []
+
+    # Firma del Subdirector
+    firma_subdirector = Paragraph(
+        """___________________________<br/>
+        <b>DARIO BERNARDO MONTUFAR BLANCO</b><br/>
+        Subdirector (E) del Centro Agropecuario<br/>
+        Servicio Nacional de Aprendizaje SENA""",
+        styles["FirmaPrincipal"]
+    )
+
+    # Firma Proyecto
+    firma_proyecto = Paragraph(
+        """Proyecto: Danna Isabela Ordoñez Navia<br/>
+        Cargo: Apoyo Financiero y Administrativo Grupo Intercentros""",
+        styles["FirmaSecundaria"]
+    )
+
+    # Firma Revisó
+    firma_reviso = Paragraph(
+        """Revisó: Ariel Pabón<br/>
+        Cargo: Coordinador Administrativo y Financiero Intercentros""",
+        styles["FirmaSecundaria"]
+    )
+
+    # Organizamos en tabla
+    tabla_firmas = Table(
+        [
+            [firma_subdirector],   # primera fila (subdirector)
+            [Spacer(1, 20)],       # espacio
+            [firma_proyecto],      # segunda fila (proyecto)
+            [Spacer(1, 10)],       # espacio
+            [firma_reviso]         # tercera fila (revisó)
+        ],
+        colWidths=[LETTER[0] - 9*cm]  # ocupa espacio más hacia la derecha
+    )
+
+    tabla_firmas.setStyle(TableStyle([
+        ("ALIGN", (0,0), (-1,-1), "RIGHT"),   # alinea a la derecha
+        ("LEFTPADDING", (0,0), (-1,-1), 0),
+        ("RIGHTPADDING", (0,0), (-1,-1), 0),
     ]))
-    elementos.append(t_pie)
 
-    # 🏗️ Construcción
-    doc.build(elementos)
+    elementos.append(Spacer(1, 40))
+    elementos.append(tabla_firmas)
+
+    # ---------------- ENCABEZADO Y PIE ----------------
+    def header_footer(canvas, doc):
+        canvas.saveState()
+        # Logo centrado
+        ruta_logo = os.path.join(settings.BASE_DIR, "static", "img", "logo-sena-verde.jpg")
+        logo = ImageReader(ruta_logo)
+        canvas.drawImage(logo, LETTER[0]/2 - 25, LETTER[1]-70, width=50, height=50, preserveAspectRatio=True)
+
+        # Certificación
+        canvas.setFont("Calibri-Italic", 11)
+        canvas.drawString(3*cm, LETTER[1]-60, "Certificación No. 001")
+
+        # Pie de página
+        footer_text = "Regional Cauca / Centro de Formación Agropecuario - Carrera 9ª 71N–60 B/ El Placer, Popayán – Cauca. PBX 57 602 8247678 Ext:2224"
+        canvas.setFont("Calibri", 9)
+        canvas.drawCentredString(LETTER[0] / 2.0, 1.56*cm, footer_text)
+
+        canvas.restoreState()
+
+    doc.build(elementos, onFirstPage=header_footer, onLaterPages=header_footer)
+
     return response
 
 # Create your views here.
