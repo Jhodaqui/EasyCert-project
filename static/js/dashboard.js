@@ -93,6 +93,15 @@ $(document).ready(function () {
       });
     }
 
+    // 📄 Botón PDF → abre certificado del contrato seleccionado
+    document.querySelectorAll(".generar-pdf").forEach(btn => {
+      btn.addEventListener("click", function () {
+        const contratoId = this.dataset.id;
+        const url = `/documents/contrato/pdf/${userId}/${contratoId}/`;
+        window.open(url, "_blank"); // abre en nueva pestaña
+      });
+    });
+
     // Generar Individual (ZIP)
     const btnIndividual = document.getElementById("generarIndividual");
     if (btnIndividual) {
