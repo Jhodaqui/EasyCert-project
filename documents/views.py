@@ -133,7 +133,7 @@ def generar_certificado(request, user_id, contrato_id):
         [Paragraph("Plazo de ejecución:", styles["TablaTitulo"]),
          Paragraph(f"Del {contrato.fecha_inicio} al {contrato.fecha_fin}", styles["TablaTexto"])],
         [Paragraph("Valor:", styles["TablaTitulo"]),
-         Paragraph(f"${contrato.valor_pago}".replace(",", "."), styles["TablaTexto"])],
+         Paragraph(f"El valor del contrato para todos los efectos legales y fiscales, se fijó en la suma de ${contrato.valor_pago}(cuantía del contrato)".replace(",", "."), styles["TablaTexto"])],
         [Paragraph("Obligaciones Específicas:", styles["TablaTitulo"]),
          Paragraph(contrato.objetivos_especificos or "N/A", styles["TablaTexto"])]
     ]
@@ -149,11 +149,11 @@ def generar_certificado(request, user_id, contrato_id):
 
     # ---------------- FIRMAS ----------------
     firma_subdirector = Paragraph(
-        """___________________________<br/>
-        <b>DARIO BERNARDO MONTUFAR BLANCO</b><br/>
-        Subdirector (E) del Centro Agropecuario<br/>
-        Servicio Nacional de Aprendizaje SENA""",
-        styles["FirmaPrincipal"]
+    """<br/><b>Firma</b><br/>
+    <b>DARIO BERNARDO MONTUFAR BLANCO</b><br/>
+    Subdirector (E) del Centro Agropecuario<br/>
+    <b>Servicio Nacional de Aprendizaje SENA</b>""",
+    styles["FirmaPrincipal"]
     )
     firma_proyecto = Paragraph(
         """Proyecto: Danna Isabela Ordoñez Navia<br/>
@@ -167,17 +167,19 @@ def generar_certificado(request, user_id, contrato_id):
     )
 
     tabla_firmas = Table(
-        [[firma_subdirector],
-         [Spacer(1, 20)],
-         [firma_proyecto],
-         [Spacer(1, 10)],
-         [firma_reviso]],
-        colWidths=[LETTER[0] - 9*cm]
+    [[firma_subdirector, None],
+     [Spacer(1, 40), None],
+     [firma_proyecto, None],
+     [Spacer(1, 20), None],
+     [firma_reviso, None]],
+    colWidths=[LETTER[0] / 2 - 2*cm, LETTER[0] / 2 - 2*cm]
     )
     tabla_firmas.setStyle(TableStyle([
-        ("ALIGN", (0,0), (-1,-1), "RIGHT"),
-        ("LEFTPADDING", (0,0), (-1,-1), 0),
-        ("RIGHTPADDING", (0,0), (-1,-1), 0),
+    ("ALIGN", (0,0), (0,0), "LEFT"),     # Proyecto y Reviso alineados a la izquierda
+    ("ALIGN", (1,0), (1,0), "RIGHT"),    # Subdirector alineado a la derecha
+    ("VALIGN", (0,0), (-1,-1), "TOP"),
+    ("LEFTPADDING", (0,0), (-1,-1), 0),
+    ("RIGHTPADDING", (0,0), (-1,-1), 0),
     ]))
     elementos.append(Spacer(1, 40))
     elementos.append(tabla_firmas)
@@ -194,9 +196,10 @@ def generar_certificado(request, user_id, contrato_id):
         canvas.drawString(3*cm, LETTER[1]-70, f"Certificación No. {contrato.id:03d}")
 
         footer_text = "Regional Cauca / Centro de Formación Agropecuario - Carrera 9ª 71N–60 B/ El Placer, Popayán – Cauca. PBX 57 602 8247678 Ext:2224"
+        canvas.setFillColorRGB(0, 0.5, 0)  # verde SENA
         canvas.setFont("Calibri", 9)
         canvas.drawCentredString(LETTER[0] / 2.0, 1.56*cm, footer_text)
-        canvas.restoreState()
+        canvas.setFillColorRGB(0, 0, 0)  # restaurar negro para lo demás
 
     # ---------------- RENDER ----------------
     doc.build(elementos, onFirstPage=header_footer, onLaterPages=header_footer)

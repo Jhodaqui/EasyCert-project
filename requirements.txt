@@ -6,3 +6,4 @@ python-magic-bin
 pandas
 mailmerge
 python-docx-mailmerge
+weasyprint
