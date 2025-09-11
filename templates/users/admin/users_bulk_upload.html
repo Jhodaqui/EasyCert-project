@@ -7,40 +7,38 @@
 </form>
 
 <div class="alert alert-info">
-    <strong>Consejo:</strong> El archivo debe tener las columnas en este orden:
-    <code>nombres</code>, <code>apellidos</code>, <code>tipo_documento</code>,
-    <code>numero_documento</code>, <code>email</code>, <code>password</code>.
+    <strong>Consejo:</strong> El archivo CSV debe tener las columnas en este orden:
+    <code>nombreMpio</code>, <code>idDepto</code>, <code>nombreCentro</code>.
     <br>
     Ejemplo de CSV:
     <pre>
-nombres,apellidos,tipo_documento,numero_documento,email,password
-Juan,Pérez,CC,12345678,juan.perez@sena.edu.co,clave123
-María,Gómez,TI,98765432,maria.gomez@sena.edu.co,clave456
+nombreMpio,idDepto,nombreCentro
+Leticia,91,Centro para la Biodiversidad y el Turismo del Amazonas
+Caldas,5,Centro de los Recursos Naturales Renovables -La Salada
+Itaguí,5,Centro del Diseño y Manufactura del Cuero
     </pre>
 </div>
 
 <hr>
 
-<h3>Usuarios existentes</h3>
+<h3>Municipios existentes</h3>
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Email</th>
-            <th>Nombres</th>
-            <th>Apellidos</th>
-            <th>Documento</th>
+            <th>Nombre Municipio</th>
+            <th>Departamento</th>
+            <th>Centro</th>
         </tr>
     </thead>
     <tbody>
-        {% for user in users %}
+        {% for municipio in municipios %}
         <tr>
-            <td>{{ user.email }}</td>
-            <td>{{ user.nombres }}</td>
-            <td>{{ user.apellidos }}</td>
-            <td>{{ user.tipo_documento }} {{ user.numero_documento }}</td>
+            <td>{{ municipio.nombreMpio }}</td>
+            <td>{{ municipio.idDepto.nombreDepto }}</td>
+            <td>{{ municipio.nombreCentro }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4">No hay usuarios</td></tr>
+        <tr><td colspan="3">No hay municipios cargados</td></tr>
         {% endfor %}
     </tbody>
 </table>
