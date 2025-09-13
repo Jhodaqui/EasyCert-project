@@ -172,7 +172,7 @@ function mostrarMensajeNoResultados(textoBuscado) {
 
 {% comment %} =================== MODAL DE LISTA =================== {% endcomment %}
 <div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <!-- Campo oculto para guardar el usuario seleccionado -->
       <input type="hidden" id="modal_usuario_id">
@@ -183,9 +183,6 @@ function mostrarMensajeNoResultados(textoBuscado) {
           <button type="button" class="btn btn-sm btn-success" id="nuevoContratoBtn">
             <i class="fas fa-plus"></i>
           </button>
-          <a href="{% url 'documents:generar_pdf' %}"><button type="button" class="btn btn-sm btn-secondary" id="refreshContratosBtn">
-            <i class="fas fa-file "></i> PDF
-            </a> 
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
       </div>

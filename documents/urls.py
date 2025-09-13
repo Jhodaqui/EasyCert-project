@@ -12,5 +12,5 @@ urlpatterns = [
     path("contrato/<int:contrato_id>/", views.contrato_detail, name="contrato_detail"),
     path("generate-individual/<int:user_id>/", views.generate_individual_documents, name="generate_individual"),
     # pruebas
-    path('contrato/pdf/', views.generar_certificado, name='generar_pdf'),
+    path("contrato/pdf/<int:user_id>/<int:contrato_id>/", views.generar_certificado, name="generar_pdf"),
 ]

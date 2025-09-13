@@ -80,3 +80,19 @@ class Constancia(models.Model):
 
     def __str__(self):
         return f"{self.usuario} ({self.fecha_inicial} → {self.fecha_final}) - {self.estado}"
+
+class dptos(models.Model):
+    idDepto = models.CharField(primary_key=True, max_length=20, unique=True)
+    nombreDepto = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombreDepto
+
+class municipios(models.Model):
+    idMpio = models.AutoField(primary_key=True)
+    nombreMpio = models.CharField(max_length=100)
+    idDepto = models.ForeignKey(dptos, on_delete=models.CASCADE)
+    nombreCentro = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.nombreMpio    

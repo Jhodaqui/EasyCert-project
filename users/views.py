@@ -13,11 +13,11 @@ from .utils import crear_carpetas as crear_CarpetasUsuario
 from django.template.loader import render_to_string
 from django.http import JsonResponse, HttpResponse
 
-from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm
+from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm, MunicipiosUploadForm
 import io
 import csv
 import pandas as pd
-from .models import CustomUser, Constancia
+from .models import CustomUser, Constancia, municipios, dptos
 from datetime import date
 
 # correo 
@@ -238,6 +238,62 @@ def users_bulk_upload(request):
     User = get_user_model()
     users = User.objects.exclude(role="admin")  # Evitar mostrar admins
     return render(request, "users/admin/users_bulk_upload.html", {"form": form, "users": users})
+
+
+def upload_municipios(request):
+    if request.method == "POST":
+        form = MunicipiosUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES['file']
+
+            # Validar que sea CSV
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, "El archivo debe tener extensión .csv")
+                return redirect('upload_municipios')
+
+            try:
+                data_set = csv_file.read().decode('utf-8')
+                io_string = io.StringIO(data_set)
+                reader = csv.DictReader(io_string)
+
+                count = 0
+                for row in reader:
+                    nombre_mpio = row['nombreMpio']
+                    id_depto = row['idDepto']
+                    nombre_centro = row['nombreCentro'] if row['nombreCentro'] else None
+
+                    # Validar que el departamento exista
+                    try:
+                        depto = dptos.objects.get(idDepto=id_depto)
+                    except dptos.DoesNotExist:
+                        messages.error(request, f"El departamento con ID {id_depto} no existe. Línea omitida.")
+                        continue
+
+                    # Crear municipio
+                    municipios.objects.create(
+                        nombreMpio=nombre_mpio,
+                        idDepto=depto,
+                        nombreCentro=nombre_centro
+                    )
+                    count += 1
+
+                messages.success(request, f"Se importaron {count} municipios correctamente.")
+
+            except Exception as e:
+                messages.error(request, f"Error procesando el archivo: {str(e)}")
+                return redirect('users_bulk_upload')
+
+            return redirect('users_bulk_upload')
+    else:
+        form = MunicipiosUploadForm()
+
+    # Mostrar municipios cargados
+    municipios = municipios.objects.select_related('idDepto').all()
+
+    return render(request, 'users_bulk_upload.html', {
+        'form': form,
+        'municipios': municipios
+    })
 
 @login_required
 def staff_dashboard(request):

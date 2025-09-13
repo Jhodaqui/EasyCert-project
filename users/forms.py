@@ -95,6 +95,9 @@ class BulkUploadForm(forms.Form):
         label="Archivo de usuarios (CSV o Excel)",
         help_text="Sube un archivo con columnas: nombres, apellidos, tipo_documento, numero_documento, email, password"
     )
+    
+class MunicipiosUploadForm(forms.Form):
+    file = forms.FileField(label="Selecciona el archivo CSV")
 
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Correo electrónico")

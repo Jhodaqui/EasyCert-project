@@ -63,3 +63,16 @@ class UserContractData(models.Model):
 
     def __str__(self):
         return f"{self.usuario.email} - {self.campo}"
+
+class DatosPdf(models.Model):
+    certificacion = models.TextField(max_length=255)
+    hace_constar = models.TextField(max_length=255)
+    introduccion = models.TextField(max_length=255)
+    numero_fecha_contrato = models.TextField(max_length=255)
+    objeto = models.TextField(max_length=255)
+    plazo_ejecucion = models.TextField(max_length=255)
+    fecha_inicio_ejecucion = models.TextField(max_length=255)
+    fecha_finalizacion = models.TextField(max_length=255)
+    valor_pago = models.TextField(max_length=255)
+    obligaciones = models.TextField(max_length=255)
+    expedicion = models.TextField(max_length=255)
