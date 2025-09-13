@@ -21,4 +21,3 @@ def crear_carpetas(usuario):
 
     if not os.path.exists(subcarpeta_bloques):
         os.makedirs(subcarpeta_bloques)
-
