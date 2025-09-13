@@ -306,108 +306,7 @@ h6 { font-size: 1rem; }
     color: var(--color-text-light);
 }
 
-/* ===== GESTIÓN DE ROLES ===== */
-.roles-container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #fff;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-}
 
-.roles-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--color-border);
-}
-
-.roles-title {
-    color: var(--color-text);
-    margin: 0;
-    font-weight: 700;
-    font-size: 32px;
-}
-
-.roles-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.roles-table th {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #00304D 100%);
-    color: white;
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
-}
-
-.roles-table td {
-    padding: 15px;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.roles-table tr:nth-child(even) {
-    background-color: var(--color-lighter);
-}
-
-.roles-table tr:hover {
-    background-color: #edf2f7;
-}
-
-.role-form {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-}
-
-.role-select {
-    padding: 8px 12px;
-    border: 2px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    background-color: white;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.role-select:focus {
-    border-color: var(--color-secondary);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
-}
-
-.stats-container {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
-
-.stat-card {
-    flex: 1;
-    min-width: 150px;
-    background: linear-gradient(135deg, #f7f9fc 0%, #edf2f7 100%);
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    border: 1px solid var(--color-border);
-}
-
-.no-users {
-    text-align: center;
-    padding: 40px;
-    color: var(--color-text-light);
-    font-style: italic;
-}
 
 /* ===== DASHBOARD FUNCIONARIO - SOLICITUD CONSTANCIAS ===== */
 .dashboard {
@@ -1625,3 +1524,112 @@ h6 { font-size: 1rem; }
   .reset-container button:hover {
     background: #2f8700;
   }
+
+  /* ===== GESTIÓN DE ROLES ===== */
+.roles-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.roles-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.roles-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.logout-btn {
+    background: #e74c3c;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+.logout-btn:hover {
+    background: #c0392b;
+}
+
+.roles-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.roles-table th, 
+.roles-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.roles-table th {
+    background: #2c3e50;
+    color: #fff;
+    font-weight: bold;
+}
+
+.roles-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.role-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.role-user {
+    background: #3498db;
+}
+.role-staff {
+    background: #f39c12;
+}
+.role-admin {
+    background: #27ae60;
+}
+
+.role-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+.update-btn {
+    background: #2980b9;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.update-btn:hover {
+    background: #1c5985;
+}
+
+.no-users {
+    text-align: center;
+    padding: 30px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    color: #555;
+}
