@@ -1,41 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-{% load static %} 
-<div class="roles-container">
+{% load static %}
+
+<!-- Botón para ocultar/mostrar menú -->
+<button onclick="toggleSidebar()" style="position:fixed;top:10px;left:260px;z-index:1000;">
+    ☰ Ocultar
+</button>
+
+<!-- Barra lateral fija -->
+<div id="sidebar" style="width:250px;position:fixed;top:0;left:0;height:100%;background:#2c3e50;overflow-x:hidden;transition:0.3s;padding-top:60px;z-index:999;">
+    <div style="padding:10px;">
+        <h3 style="color:#ecf0f1;">Opciones</h3>
+
+        <button onclick="toggleSubmenu('rolesSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Roles</button>
+        <div id="rolesSub" style="display:none;margin-left:15px;">
+            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Ver Roles</a>
+            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Añadir Rol</a>
+        </div>
+
+        <button onclick="toggleSubmenu('usersSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Usuarios</button>
+        <div id="usersSub" style="display:none;margin-left:15px;">
+            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Lista Usuarios</a>
+            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Historial</a>
+        </div>
+    </div>
+</div>
+
+<!-- Contenido principal -->
+<div class="roles-container" style="margin-left:270px;margin-top:50px;">
     <div class="roles-header">
         <h1 class="roles-title">Gestión de Roles</h1>
         <a href="{% url 'logout' %}" class="logout-btn">
             <i class="fas fa-sign-out-alt"></i>Cerrar sesión
         </a>
     </div>
-    
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="stat-number">{{ users|length }}</div>
-            <div class="stat-label">Usuarios totales</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ users.is_superuser|length }}</div>
-            <div class="stat-label">Administradores</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ users.roles.staff|length }}</div>
-            <div class="stat-label">Staff</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ users.roles.user|length }}</div>
-            <div class="stat-label">Usuarios</div>
-        </div>
-    </div>
-    
+
+    <!-- Barra de búsqueda -->
+    <input type="text" id="searchInput" placeholder="Buscar usuario..." 
+           onkeyup="filterUsers()" 
+           style="width:100%;padding:10px;margin:15px 0;border:1px solid #ccc;border-radius:6px;">
+
     {% if users %}
-    <table class="roles-table">
-        <tr>
-            <th>Usuario</th>
-            <th>Email</th>
-            <th>Rol actual</th>
-            <th>Cambiar rol</th>
-        </tr>
+    <table class="roles-table" id="rolesTable">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol actual</th>
+                <th>Cambiar rol</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for u in users %}
         <tr>
             <td>{{ u.username }}</td>
@@ -61,45 +76,58 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
     </table>
     {% else %}
     <div class="no-users">
         <p>No hay usuarios registrados en el sistema.</p>
     </div>
     {% endif %}
+
+    <!-- Enlaces abajo -->
+    <div style="margin-top:30px;text-align:center;">
+        <a href="#" style="margin-right:20px;">➕ Añadir Roles</a>
+        <a href="#">📜 Historial de Roles</a>
+    </div>
 </div>
 
-{% endblock %}
+<!-- Scripts -->
+<script>
+function toggleSidebar() {
+    var sidebar = document.getElementById("sidebar");
+    var btn = document.querySelector("button[onclick='toggleSidebar()']");
+    if (sidebar.style.width === "0px") {
+        sidebar.style.width = "250px";
+        btn.style.left = "260px";
+        btn.innerText = "☰ Ocultar";
+        document.querySelector(".roles-container").style.marginLeft = "270px";
+    } else {
+        sidebar.style.width = "0px";
+        btn.style.left = "10px";
+        btn.innerText = "☰ Menú";
+        document.querySelector(".roles-container").style.marginLeft = "20px";
+    }
+}
 
-{% comment %} {% extends "base.html" %}
-{% block content %}
-<h1>Gestión de Roles</h1>
-<p><a href="{% url 'logout' %}">Cerrar sesión</a></p>
-<table>
-  <tr>
-    <th>Usuario</th>
-    <th>Email</th>
-    <th>Rol actual</th>
-    <th>Cambiar rol</th>
-  </tr>
-  {% for u in users %}
-  <tr>
-    <td>{{ u.username }}</td>
-    <td>{{ u.email }}</td>
-    <td>{{ u.role }}</td>
-    <td>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="user_id" value="{{ u.id }}">
-        <select name="role">
-          <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
-          <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
-          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
-        </select>
-        <button type="submit">Actualizar</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-{% endblock %} {% endcomment %}
+function toggleSubmenu(id) {
+    var submenu = document.getElementById(id);
+    submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+}
+
+function filterUsers() {
+    var input = document.getElementById("searchInput");
+    var filter = input.value.toLowerCase();
+    var trs = document.getElementById("rolesTable").getElementsByTagName("tr");
+
+    for (var i = 1; i < trs.length; i++) {
+        var tdUser = trs[i].getElementsByTagName("td")[0];
+        var tdEmail = trs[i].getElementsByTagName("td")[1];
+        if (tdUser && tdEmail) {
+            var txtValue = tdUser.textContent.toLowerCase() + " " + tdEmail.textContent.toLowerCase();
+            trs[i].style.display = txtValue.indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+}
+</script>
+
+{% endblock %}
