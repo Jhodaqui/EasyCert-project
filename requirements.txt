@@ -1,8 +1,12 @@
 Django
 psycopg2-binary
 python-dotenv
+python-docx
 PyPDF2
+pdfplumber
 python-magic-bin
 pandas
 docx-mailmerge
 weasyprint
+reportlab
+openpyxl
