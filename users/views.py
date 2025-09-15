@@ -182,7 +182,7 @@ def password_reset_confirm_view(request, uidb64, token):
 def admin_dashboard(request):
     return render(request, "users/admin/dashboard.html")
 
-def users_bulk_upload(request):
+def datos_bulk_upload(request):
     if request.method == "POST":
         form = BulkUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -190,109 +190,105 @@ def users_bulk_upload(request):
             file_name = file.name.lower()
 
             try:
-                # 📌 Si es CSV
+                # 📌 Leer CSV
                 if file_name.endswith(".csv"):
                     decoded_file = file.read().decode("utf-8")
                     io_string = io.StringIO(decoded_file)
                     reader = csv.DictReader(io_string)
                     rows = list(reader)
 
-                # 📌 Si es Excel
+                # 📌 Leer Excel
                 elif file_name.endswith(".xls") or file_name.endswith(".xlsx"):
                     df = pd.read_excel(file)
                     rows = df.to_dict(orient="records")
 
                 else:
-                    messages.error(request, "Formato de archivo no soportado. Solo se permite CSV o Excel.")
-                    return redirect("users_bulk_upload")
+                    messages.error(request, "Formato no soportado. Solo CSV o Excel.")
+                    return redirect("datos_bulk_upload")
 
-                # Procesamos cada fila
-                for row in rows:
-                    data = {
-                        "nombres": row.get("nombres"),
-                        "apellidos": row.get("apellidos"),
-                        "tipo_documento": row.get("tipo_documento"),
-                        "numero_documento": row.get("numero_documento"),
-                        "email": row.get("email"),
-                        "password1": row.get("password") or "12345",  # por defecto si no viene
-                        "password2": row.get("password") or "12345",
-                    }
+                if not rows:
+                    messages.error(request, "El archivo está vacío.")
+                    return redirect("datos_bulk_upload")
 
-                    user_form = RegisterForm(data)
-                    if user_form.is_valid():
-                        user = user_form.save()
-                        crear_CarpetasUsuario(user)
-                    else:
-                        messages.error(request, f"Error en {row.get('email')}: {user_form.errors}")
+                # Normalizamos encabezados a minúsculas
+                headers = [h.lower() for h in rows[0].keys()]
 
-                messages.success(request, "Usuarios cargados correctamente.")
-                return redirect("users_bulk_upload")
+                # ==============================
+                # 📌 Carga de Usuarios
+                # ==============================
+                if {"nombres", "apellidos", "tipo_documento", "numero_documento", "email"}.issubset(headers):
+                    for row in rows:
+                        data = {
+                            "nombres": row.get("nombres"),
+                            "apellidos": row.get("apellidos"),
+                            "tipo_documento": row.get("tipo_documento"),
+                            "numero_documento": row.get("numero_documento"),
+                            "email": row.get("email"),
+                            "password1": row.get("password") or "12345",
+                            "password2": row.get("password") or "12345",
+                        }
+
+                        user_form = RegisterForm(data)
+                        if user_form.is_valid():
+                            user = user_form.save()
+                            crear_CarpetasUsuario(user)
+                        else:
+                            messages.error(request, f"Error en {row.get('email')}: {user_form.errors}")
+
+                    messages.success(request, "Usuarios cargados correctamente.")
+
+                # ==============================
+                # 📌 Carga de Municipios
+                # ==============================
+                elif {"nombrempio", "iddepto", "nombrecentro"}.issubset(headers):
+                    for row in rows:
+                        nombre_mpio = row.get("nombreMpio") or row.get("nombrempio")
+                        id_depto = row.get("idDepto") or row.get("iddepto")
+                        nombre_centro = row.get("nombreCentro") or row.get("nombrecentro") or None
+
+                        # Verificar si el departamento existe
+                        try:
+                            depto = dptos.objects.get(idDepto=id_depto)
+                        except dptos.DoesNotExist:
+                            messages.error(
+                                request,
+                                f"Departamento con ID {id_depto} no existe. Línea omitida: {nombre_mpio}"
+                            )
+                            continue
+
+                        # Crear el municipio
+                        municipios.objects.create(
+                            nombreMpio=nombre_mpio,
+                            idDepto=depto,
+                            nombreCentro=nombre_centro
+                        )
+
+                    messages.success(request, "Municipios cargados correctamente.")
+
+                else:
+                    messages.error(request, "El archivo no tiene un formato válido para usuarios o municipios.")
+                    return redirect("datos_bulk_upload")
+
+                return redirect("datos_bulk_upload")
 
             except Exception as e:
                 messages.error(request, f"Ocurrió un error procesando el archivo: {str(e)}")
-                return redirect("users_bulk_upload")
+                return redirect("datos_bulk_upload")
 
     else:
         form = BulkUploadForm()
 
+    # ==============================
+    # 📌 Mostrar datos existentes
+    # ==============================
     User = get_user_model()
-    users = User.objects.exclude(role="admin")  # Evitar mostrar admins
-    return render(request, "users/admin/users_bulk_upload.html", {"form": form, "users": users})
+    users = User.objects.exclude(role="admin")  # Ocultar admins
+    mpio = municipios.objects.select_related("idDepto").all()
 
-
-def upload_municipios(request):
-    if request.method == "POST":
-        form = MunicipiosUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            csv_file = request.FILES['file']
-
-            # Validar que sea CSV
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, "El archivo debe tener extensión .csv")
-                return redirect('upload_municipios')
-
-            try:
-                data_set = csv_file.read().decode('utf-8')
-                io_string = io.StringIO(data_set)
-                reader = csv.DictReader(io_string)
-
-                count = 0
-                for row in reader:
-                    nombre_mpio = row['nombreMpio']
-                    id_depto = row['idDepto']
-                    nombre_centro = row['nombreCentro'] if row['nombreCentro'] else None
-
-                    # Validar que el departamento exista
-                    try:
-                        depto = dptos.objects.get(idDepto=id_depto)
-                    except dptos.DoesNotExist:
-                        messages.error(request, f"El departamento con ID {id_depto} no existe. Línea omitida.")
-                        continue
-
-                    # Crear municipio
-                    municipios.objects.create(
-                        nombreMpio=nombre_mpio,
-                        idDepto=depto,
-                        nombreCentro=nombre_centro
-                    )
-                    count += 1
-
-                messages.success(request, f"Se importaron {count} municipios correctamente.")
-
-            except Exception as e:
-                messages.error(request, f"Error procesando el archivo: {str(e)}")
-                return redirect('users_bulk_upload')
-
-            return redirect('users_bulk_upload')
-    else:
-        form = MunicipiosUploadForm()
-
-    # Mostrar municipios cargados
-    municipios = municipios.objects.select_related('idDepto').all()
-
-    return render(request, 'users_bulk_upload.html', {
-        'form': form,
-        'municipios': municipios
+    return render(request, "users/admin/datos_bulk_upload.html", {
+        "form": form,
+        "users": users,
+        "municipios": mpio,
     })
 
 @login_required
