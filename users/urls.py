@@ -5,7 +5,7 @@ from .views import (
     admin_dashboard, staff_dashboard, user_dashboard,
     mostrar_formulario_constancia, procesar_constancia,
     datos_bulk_upload, user_dashboard_solicitud,
-    manage_roles, crear_rol
+    manage_roles
 )
 
 urlpatterns = [
@@ -26,7 +26,4 @@ urlpatterns = [
 
     path("user-dashboard/solicitud/", user_dashboard_solicitud, name="user_dashboard_solicitud"),
     path("manage-roles/", manage_roles, name="manage_roles"),
-
-    # Agregar esta línea dentro de urlpatterns
-    path("crear-rol/", crear_rol, name="crear_rol"),
 ]
