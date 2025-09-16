@@ -86,12 +86,13 @@ def login_view(request):
                     login(request, user)
 
                     # Redirección según rol
-                    if user.role == "admin":
+                    if user.role_fk and user.role_fk.nombre == "admin":
                         return redirect("admin_dashboard")
-                    elif user.role == "staff":
+                    elif user.role_fk and user.role_fk.nombre == "staff":
                         return redirect("staff_dashboard")
                     else:
                         return redirect("user_dashboard")
+                    #cambio añadido
                 else:
                     # Error específico para cuenta no activada
                     field_errors['general'] = "⏳ Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico para activarla."
@@ -430,3 +431,43 @@ def manage_roles(request):
         return redirect("manage_roles")
 
     return render(request, "users/roles/manage_roles.html", {"users": users})
+
+# Agregar al final de views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
+from .models import Rol
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def crear_rol(request):
+    try:
+        data = json.loads(request.body)
+        nombre = data.get('nombre', '').strip()
+        descripcion = data.get('descripcion', '').strip()
+        
+        if not nombre:
+            return JsonResponse({'success': False, 'error': 'El nombre del rol es requerido'})
+        
+        # Verificar si el rol ya existe
+        if Rol.objects.filter(nombre=nombre).exists():
+            return JsonResponse({'success': False, 'error': 'Ya existe un rol con ese nombre'})
+        
+        # Crear el nuevo rol
+        nuevo_rol = Rol.objects.create(
+            nombre=nombre,
+            descripcion=descripcion
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'mensaje': 'Rol creado exitosamente',
+            'rol': {
+            'id': nuevo_rol.id,
+            'nombre': nuevo_rol.nombre,
+            'descripcion': nuevo_rol.descripcion
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

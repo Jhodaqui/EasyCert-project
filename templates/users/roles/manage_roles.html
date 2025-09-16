@@ -2,6 +2,9 @@
 {% block content %}
 {% load static %}
 
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <!-- Botón para ocultar/mostrar menú -->
 <button onclick="toggleSidebar()" style="position:fixed;top:10px;left:260px;z-index:1000;">
     ☰ Ocultar
@@ -15,7 +18,7 @@
         <button onclick="toggleSubmenu('rolesSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Roles</button>
         <div id="rolesSub" style="display:none;margin-left:15px;">
             <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Ver Roles</a>
-            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Añadir Rol</a>
+            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;" data-bs-toggle="modal" data-bs-target="#addRoleModal">Añadir Rol</a>
         </div>
 
         <button onclick="toggleSubmenu('usersSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Usuarios</button>
@@ -35,13 +38,17 @@
         </a>
     </div>
 
-    <!-- Barra de búsqueda -->
-    <input type="text" id="searchInput" placeholder="Buscar usuario..." 
-           onkeyup="filterUsers()" 
-           style="width:100%;padding:10px;margin:15px 0;border:1px solid #ccc;border-radius:6px;">
+    <!-- Barra de búsqueda con botón -->
+    <div style="display:flex;gap:10px;align-items:center;margin:15px 0;">
+        <input type="text" id="searchInput" placeholder="Buscar usuario..." 
+               style="flex:1;padding:10px;border:1px solid #ccc;border-radius:6px;">
+        <button onclick="searchUser()" style="padding:10px 15px;border:none;border-radius:6px;background:#2c3e50;color:white;cursor:pointer;">
+            🔍 Buscar
+        </button>
+    </div>
 
     {% if users %}
-    <table class="roles-table" id="rolesTable">
+    <table class="roles-table" id="rolesTable" style="display:none;">
         <thead>
             <tr>
                 <th>Usuario</th>
@@ -78,6 +85,7 @@
         {% endfor %}
         </tbody>
     </table>
+    <p id="noResult" style="display:none;color:red;font-weight:bold;margin-top:10px;"></p>
     {% else %}
     <div class="no-users">
         <p>No hay usuarios registrados en el sistema.</p>
@@ -90,6 +98,58 @@
         <a href="#">📜 Historial de Roles</a>
     </div>
 </div>
+
+<!-- Modal para Añadir Rol -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addRoleModalLabel">Añadir Nuevo Rol</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label">Nombre del Rol</label>
+                        <input type="text" class="form-control" id="roleName" placeholder="Ingrese el nombre del rol" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="roleDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="roleDescription" rows="3" placeholder="Describa las funciones de este rol"></textarea>
+                    </div>
+                    {% comment %} <div class="mb-3">
+                        <label class="form-label">Permisos</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="permisoLectura">
+                            <label class="form-check-label" for="permisoLectura">
+                                Permiso de lectura
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="permisoEscritura">
+                            <label class="form-check-label" for="permisoEscritura">
+                                Permiso de escritura
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="permisoEliminar">
+                            <label class="form-check-label" for="permisoEliminar">
+                                Permiso de eliminar
+                            </label>
+                        </div>
+                    </div> {% endcomment %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveRoleBtn">Guardar Rol</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Scripts -->
 <script>
@@ -114,20 +174,112 @@ function toggleSubmenu(id) {
     submenu.style.display = submenu.style.display === "block" ? "none" : "block";
 }
 
-function filterUsers() {
-    var input = document.getElementById("searchInput");
-    var filter = input.value.toLowerCase();
-    var trs = document.getElementById("rolesTable").getElementsByTagName("tr");
+function searchUser() {
+    var input = document.getElementById("searchInput").value.toLowerCase().trim();
+    var table = document.getElementById("rolesTable");
+    var trs = table.getElementsByTagName("tr");
+    var found = false;
 
+    if (input === "") {
+        table.style.display = "none";
+        document.getElementById("noResult").style.display = "none";
+        return;
+    }
+
+    table.style.display = "table";
     for (var i = 1; i < trs.length; i++) {
         var tdUser = trs[i].getElementsByTagName("td")[0];
         var tdEmail = trs[i].getElementsByTagName("td")[1];
         if (tdUser && tdEmail) {
             var txtValue = tdUser.textContent.toLowerCase() + " " + tdEmail.textContent.toLowerCase();
-            trs[i].style.display = txtValue.indexOf(filter) > -1 ? "" : "none";
+            if (txtValue.indexOf(input) > -1) {
+                trs[i].style.display = "";
+                found = true;
+            } else {
+                trs[i].style.display = "none";
+            }
         }
     }
+
+    var msg = document.getElementById("noResult");
+    if (!found) {
+        msg.innerText = `Usuario "${input}" no encontrado`;
+        msg.style.display = "block";
+    } else {
+        msg.style.display = "none";
+    }
 }
-</script>
+
+// Permitir Enter en el input para buscar
+document.getElementById("searchInput").addEventListener("keyup", function(event) {
+    if (event.key === "Enter") {
+        searchUser();
+    }
+});
+
+// Función para guardar el rol
+function guardarRol() {
+    const nombre = document.getElementById('roleName').value.trim();
+    const descripcion = document.getElementById('roleDescription').value.trim();
+    
+    if (!nombre) {
+        alert('El nombre del rol es requerido');
+        return;
+    }
+    
+    // Datos a enviar
+    const data = {
+        nombre: nombre,
+        descripcion: descripcion
+    };
+    
+    // Petición AJAX
+    fetch('{% url "crear_rol" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addRoleModal'));
+            modal.hide();
+            
+            // Mostrar mensaje de éxito
+            alert('✅ ' + data.mensaje);
+            
+            // Actualizar los selects de rol (agregar el nuevo rol a todos los selects)
+            actualizarSelectsRol(data.rol);
+            
+            // Limpiar formulario
+            document.getElementById('roleForm').reset();
+            
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Ocurrió un error al guardar el rol');
+    });
+}
+
+// Función para actualizar todos los selects de rol
+function actualizarSelectsRol(nuevoRol) {
+    const selects = document.querySelectorAll('select[name="role"]');
+    
+    selects.forEach(select => {
+        const option = document.createElement('option');
+        option.value = nuevoRol.nombre; // Usamos el nombre porque así funciona tu sistema actual
+        option.textContent = nuevoRol.nombre;
+        select.appendChild(option);
+    });
+}
+
+// Manejar el guardado del rol - NUEVA VERSIÓN
+document.getElementById('saveRoleBtn').addEventListener('click', guardarRol);
 
 {% endblock %}
