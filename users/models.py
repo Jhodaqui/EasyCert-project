@@ -12,6 +12,7 @@ TIPOS_DOCUMENTO = [
     ('PA', 'Pasaporte'),
 ]
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -29,6 +30,14 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+class Rol(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nombre
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ("admin", "Administrador"),
@@ -36,7 +45,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ("user", "Usuario"),
     )
 
-    # Nuevos campos
+    # Datos personales
     nombres = models.CharField("Nombres", max_length=100)
     apellidos = models.CharField("Apellidos", max_length=100)
     tipo_documento = models.CharField("Tipo de documento", max_length=10, choices=TIPOS_DOCUMENTO)
@@ -44,10 +53,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField("Correo electrónico", unique=True)
 
     # Roles
-    role = models.CharField("Rol de usuario", max_length=20, choices=ROLE_CHOICES, default="user")
+    role = models.CharField("Rol de usuario", max_length=20, choices=ROLE_CHOICES, default="user")  # antiguo
+    role_fk = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, blank=True, related_name="users")  # nuevo
 
     # Estado
-    is_active = models.BooleanField(default=True)  # <-- Ahora siempre activo por defecto
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
@@ -61,7 +71,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_tipo_documento_display_full(self):
         """Devuelve el texto completo del tipo de documento"""
         return dict(TIPOS_DOCUMENTO).get(self.tipo_documento, self.tipo_documento)
-    
+
+
 class Constancia(models.Model):
     ESTADOS = [
         ("pendiente", "Pendiente"),
@@ -81,12 +92,14 @@ class Constancia(models.Model):
     def __str__(self):
         return f"{self.usuario} ({self.fecha_inicial} → {self.fecha_final}) - {self.estado}"
 
+
 class dptos(models.Model):
     idDepto = models.CharField(primary_key=True, max_length=20, unique=True)
     nombreDepto = models.CharField(max_length=100)
 
     def __str__(self):
         return self.nombreDepto
+
 
 class municipios(models.Model):
     idMpio = models.AutoField(primary_key=True)
@@ -95,4 +108,4 @@ class municipios(models.Model):
     nombreCentro = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
-        return self.nombreMpio    
+        return self.nombreMpio
