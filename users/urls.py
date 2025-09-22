@@ -5,7 +5,7 @@ from .views import (
     admin_dashboard, staff_dashboard, user_dashboard,
     mostrar_formulario_constancia, procesar_constancia,
     datos_bulk_upload, user_dashboard_solicitud,
-    manage_roles
+    manage_roles, cargar_centros  # Se añadió cargar_centros
 )
 
 urlpatterns = [
@@ -22,8 +22,11 @@ urlpatterns = [
     path("staff-dashboard/", staff_dashboard, name="staff_dashboard"),
     path("user-dashboard/", user_dashboard, name="user_dashboard"),
     path("formulario-constancia/", mostrar_formulario_constancia, name="formulario_constancia"),
-    path('procesar-constancia/', procesar_constancia, name='procesar_constancia'),
+    path("procesar-constancia/", procesar_constancia, name="procesar_constancia"),
 
     path("user-dashboard/solicitud/", user_dashboard_solicitud, name="user_dashboard_solicitud"),
     path("manage-roles/", manage_roles, name="manage_roles"),
+
+    # Nueva ruta para AJAX de municipios/centros
+    path("cargar-centros/", cargar_centros, name="cargar_centros"),
 ]

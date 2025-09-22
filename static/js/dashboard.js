@@ -283,10 +283,30 @@ $(document).ready(function () {
       resetFormModalUI();
     }
 
-    alert("✅ Contrato guardado correctamente.");
-    // Opcional: cerrar el modal tras guardar
-    // bootstrap.Modal.getInstance(formModalEl).hide();
+      // Reemplazamos la alerta estándar por SweetAlert2
+    Swal.fire({
+      title: 'Contrato guardado correctamente',
+      icon: 'success',
+      text: 'El contrato se ha guardado con éxito.',
+      showConfirmButton: false,  // No mostramos el botón de confirmación
+      position: 'center',  // Centramos la alerta
+      background: '#e0ffe0',  // Fondo suave y verde claro
+      padding: '20px',  // Espacio interno
+      width: '400px',  // Ancho fijo para la alerta
+      heightAuto: false,  // No ajustamos automáticamente la altura
+      timer: 2000,  // La alerta se cierra automáticamente después de 2 segundos
+      timerProgressBar: true,  // Muestra una barra de progreso mientras cuenta el tiempo
+      didClose: () => {  // Ejecutar una vez que la alerta se cierre
+        // Redirigir al modal
+        $('#contratoModal').modal('show');
+      },
+      allowOutsideClick: false,  // No permitir que se cierre al hacer clic fuera de la alerta
+      allowEscapeKey: false,  // No permitir que se cierre con la tecla "Escape"
+      customClass: {
+        popup: 'animated fadeIn',  // Animación para la alerta al aparecer
+    },
   });
+});
 
   // ==============================
   // 7) Pre-llenar desde PDF (FORM)
@@ -376,7 +396,23 @@ $(document).ready(function () {
       await refrescarContratosCargados(userId);
 
       resetFormModalUI(); // dejar listo para el próximo
-      alert("Contrato guardado. Ahora puedes subir otro.");
+
+    // Reemplazamos la alerta estándar por SweetAlert2
+    Swal.fire({
+      title: 'Contrato guardado',
+      text: 'Ahora puedes subir otro.',
+      icon: 'success',
+      confirmButtonText: '¡Genial!',
+      draggable: true,
+      background: '#f0f8ff',  // Color de fondo suave
+      showCloseButton: true,
+      buttonsStyling: false,  // Desactivar estilos predeterminados de los botones
+      confirmButtonColor: '#4CAF50',  // Color personalizado del botón
+      closeButtonHtml: '&times;',  // Personaliza el icono de la "X" de cierre
+      padding: '20px',  // Relleno dentro de la alerta
+      width: '400px',  // Ancho de la alerta
+      heightAuto: false,  // Evita que la altura sea automática
     });
-  }
+  });
+}
 });

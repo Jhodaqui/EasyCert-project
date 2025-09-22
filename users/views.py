@@ -68,7 +68,16 @@ def register_view(request):
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
-# fin del correo 
+
+# =========================
+# AJAX: cargar centros por depto
+# =========================
+def cargar_centros(request):
+    depto_id = request.GET.get("departamento")
+    centros = municipios.objects.filter(idDepto_id=depto_id).values("idMpio", "nombreCentro")
+    return JsonResponse(list(centros), safe=False)
+
+# fin del correo
 
 # Login
 def login_view(request):
