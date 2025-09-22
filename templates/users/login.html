@@ -2,70 +2,70 @@
 {% load static %}
 {% block content %}
 
-<center>
-  
-    <div class="container">
-      <div class="login-container">
-        <!-- Logo img EasyCert -->
-        <div class="logo-container">
-          <div class="logo-placeholder">  
-            <img src="{% static 'img/sena-logo.png' %}" alt="Logo EasyCert">
-          </div>
-        </div>
-
-        <h2 class="form-title">INICIA SESIÓN</h2>
-
-           <!-- MOSTRAR SOLO field_errors.general (nuevo sistema) -->
-        {% if field_errors.general %}
-        <div class="alert alert-danger" role="alert">
-          <i class="fas fa-exclamation-circle"></i>
-          {{ field_errors.general }}
-        </div>
-        {% endif %}
-
-        
-
-        <form method="post">
-          {% csrf_token %}
-
-
-          <!-- Campo de correo electrónico -->
-          <div class="form-group">
-            <div class="input-icon right">
-              <input type="email" class="form-control" id="id_email" name="email" 
-                     placeholder="Correo electrónico" value="{{ form.email.value|default:'' }}" required>
-              <i class="fas fa-envelope icon-right"></i>
-            </div>
-            {% if form.email.errors %}
-              <div class="error-message">{{ form.email.errors }}</div>
-            {% endif %}
-          </div>
-
-          <!-- Campo de contraseña -->
-          <div class="form-group">
-            <div class="input-icon right">
-              <input type="password" class="form-control" id="id_password" name="password" 
-                     placeholder="Contraseña" value="{{ form.password.value|default:'' }}" required>
-              <i class="fas fa-lock icon-right"></i>
-            </div>
-            {% if form.password.errors %}
-              <div class="error-message">{{ form.password.errors }}</div>
-            {% endif %}
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-login">
-            <i class="fas fa-sign-in-alt me-2"></i>Ingresar
-          </button>
-        </form>
-
-        <div class="links-container">
-          <a href="{% url 'register' %}"><i class="fas fa-user-plus me-1"></i>Registrarse</a>
-          <span class="divider">•</span>
-          <a href="{% url 'password_reset' %}"><i class="fas fa-key me-1"></i>¿Olvidaste tu contraseña?</a>
-        </div>
-      </div>
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="card shadow-lg border-0 rounded-4 p-4" style="max-width: 400px; width: 100%;">
+    
+    <!-- Logo -->
+    <div class="text-center mb-3">
+      <img src="{% static 'img/sena-logo.png' %}" alt="Logo EasyCert" class="img-fluid" style="max-height: 80px;">
     </div>
-</center>
+
+    <h4 class="text-center fw-bold mb-4">INICIA SESIÓN</h4>
+
+    <!-- Error general -->
+    {% if field_errors.general %}
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      <div>{{ field_errors.general }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Formulario -->
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Email -->
+      <div class="mb-3 position-relative">
+        <input type="email" class="form-control ps-5" id="id_email" name="email"
+               placeholder="Correo electrónico" value="{{ form.email.value|default:'' }}" required>
+        <i class="fas fa-envelope position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        {% if form.email.errors %}
+          <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3 position-relative">
+        <input type="password" class="form-control ps-5" id="id_password" name="password"
+               placeholder="Contraseña" value="{{ form.password.value|default:'' }}" required>
+        <i class="fas fa-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        {% if form.password.errors %}
+          <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Botón -->
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+        </button>
+      </div>
+    </form>
+
+    <!-- Links -->
+    <div class="text-center">
+      <a href="{% url 'register' %}" class="text-decoration-none me-2">
+        <i class="fas fa-user-plus me-1"></i>Registrarse
+      </a>
+      <span class="text-muted">|</span>
+      <a href="{% url 'password_reset' %}" class="text-decoration-none ms-2">
+        <i class="fas fa-key me-1"></i>¿Olvidaste tu contraseña?
+      </a>
+    </div>
+
+  </div>
+</div>
+
 {% endblock %}
 
 {% comment %} {% extends "base.html" %}

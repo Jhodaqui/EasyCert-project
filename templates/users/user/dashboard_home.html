@@ -1,80 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="dashboard">
-    <div class="header">
-        <div class="header-left">
-            <div class="logo-container">
-                <img src="/static/img/EasyCert" alt="EasyCert Logo" class="logo-img">
-                <span class="logo-text">EASYCERT</span>
-            </div>
+<div class="container-fluid p-0">
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+    <div class="d-flex align-items-center">
+      <img src="/static/img/EasyCert" alt="EasyCert Logo" class="me-2" style="height: 40px;">
+      <span class="navbar-brand fw-bold">EASYCERT</span>
+    </div>
+    <div class="ms-auto d-flex align-items-center">
+      <span class="text-light me-3">
+        <i class="fas fa-user-circle me-1"></i> Hola, {{ user.nombres }}
+      </span>
+      <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+        <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
+      </a>
+    </div>
+  </nav>
+
+  <!-- Contenido -->
+  <div class="container my-4">
+    <div class="card shadow">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+          <i class="fas fa-file-alt me-2 text-primary"></i> Solicitudes de Constancias
+        </h4>
+        <div>
+          <span class="badge bg-primary me-3">{{ solicitudes|length }} solicitudes</span>
+          <button type="button" class="btn btn-sm btn-success" id="abrirFormularioBtn">
+            <i class="fas fa-plus-circle me-1"></i> Solicitar constancia
+          </button>
         </div>
-        <div class="header-right">
-            <span class="welcome-text">Hola, {{ user.nombres }}</span>
-            <a href="{% url 'logout' %}" class="logout-button">Cerrar Sesión</a>
-</div>
-</div>
-<div class="content">
-    
-    <!-- Listado de solicitudes en tabla -->
-     <div style="width: 1200px; height: 520px; overflow: auto;">
-    <div class="solicitudes">
-      <div class="solicitudes-header">
-        <h2>Solicitudes de Constancias</h2>
-        <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
-        <button type="button" class="btn btn-primary" id="abrirFormularioBtn">
-        Solicitar constancia
-        </button>
       </div>
 
-      <div class="table-container">
-        <table class="solicitudes-table">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Documento</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in solicitudes %}
-            <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
-              <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
-              <td>{{ s.usuario.numero_documento }}</td>
-              <td>
-                <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
-              </td>
-              <td class="action-buttons">
-                <a href="#" class="btn btn-primary" title="Descargar PDF">
-                    Descargar PDF
-                  <i class="fas fa-upload"></i>
-                </a>
-                
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="6" class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <h3>No hay solicitudes</h3>
-                <p>No se encontraron solicitudes de constancias.</p>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <!-- Tabla -->
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Usuario</th>
+                <th>Documento</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in solicitudes %}
+              <tr class="solicitud-row" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+                <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
+                <td>{{ s.usuario.numero_documento }}</td>
+                <td>
+                  <span class="badge 
+                    {% if s.estado == 'pendiente' %} bg-warning text-dark 
+                    {% elif s.estado == 'aprobado' %} bg-success 
+                    {% elif s.estado == 'rechazado' %} bg-danger 
+                    {% else %} bg-secondary {% endif %}">
+                    {{ s.get_estado_display }}
+                  </span>
+                </td>
+                <td>
+                  <a href="#" class="btn btn-sm btn-primary" title="Descargar PDF">
+                    <i class="fas fa-file-download me-1"></i> Descargar PDF
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4">
+                  <i class="fas fa-folder-open fa-2x text-muted mb-2"></i>
+                  <h5 class="mb-1">No hay solicitudes</h5>
+                  <p class="text-muted">No se encontraron solicitudes de constancias.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-{% comment %} Modal para solicitar constancia {% endcomment %}
-<div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" 
-     data-bs-keyboard="false">
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-4">
+    <div class="modal-content shadow">
       <div class="modal-header">
-        <h5 class="modal-title">Solicitar Constancia</h5>
+        <h5 class="modal-title">
+          <i class="fas fa-plus-circle me-1 text-primary"></i> Solicitar Constancia
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body" id="modalFormularioContenido">
@@ -83,6 +97,7 @@
     </div>
   </div>
 </div>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

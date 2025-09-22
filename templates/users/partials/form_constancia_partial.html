@@ -24,7 +24,7 @@
   <!-- Años de constancia -->
   <div class="row mb-3">
     <div class="col-md-6 mb-3">
-      <label class="form-label fw-bold">Año inicial de la constancia</label>
+      <label class="form-label fw-bold">Año de Inicio</label>
       <div class="d-flex align-items-center">
         <select class="form-select" name="{{ form.fecha_inicial.name }}" id="{{ form.fecha_inicial.id_for_label }}">
           {% for choice in form.fecha_inicial.field.choices %}
@@ -34,7 +34,7 @@
       </div>
     </div>
     <div class="col-md-6 mb-3">
-      <label class="form-label fw-bold">Año final de la constancia</label>
+      <label class="form-label fw-bold">Año de Fin</label>
       <div class="d-flex align-items-center">
         <select class="form-select" name="{{ form.fecha_final.name }}" id="{{ form.fecha_final.id_for_label }}">
           {% for choice in form.fecha_final.field.choices %}

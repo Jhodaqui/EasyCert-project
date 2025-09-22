@@ -75,6 +75,15 @@ class RegisterForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # 🔹 Agregar estilos Bootstrap
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs.update({"class": "form-select"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
+
+        # Lógica de selects dependientes
         if "departamento" in self.data:
             try:
                 depto_id = int(self.data.get("departamento"))
@@ -141,7 +150,16 @@ class LoginForm(forms.Form):
 
 
 class PasswordResetRequestForm(forms.Form):
-    email = forms.EmailField(label="Correo electrónico")
+    email = forms.EmailField(
+        label="Correo electrónico",
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ingresa tu correo electrónico",
+                "autocomplete": "email",
+            }
+        )
+    )
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()

@@ -3,33 +3,34 @@
 {% load static %} 
 <div class="dashboard">
   <!-- Header -->
-  <div class="header">
-    <div class="header-left">
-      <div class="logo-container">
-        <img src="/static/img/sena-logo.png" alt="sena Logo" class="logo-img">
-        <span class="logo-text">EASYCERT</span>
+  <div class="header d-flex justify-content-between align-items-center px-3 py-2" style="background-color:#04364A; color:white;">
+    <div class="header-left d-flex align-items-center">
+      <div class="logo-container d-flex align-items-center">
+        <img src="/static/img/sena-logo.png" alt="sena Logo" class="logo-img" style="height:40px; margin-right:10px;">
+        <span class="logo-text fw-bold">EASYCERT</span>
       </div>
     </div>
-    <div class="user-info">
-      <span class="welcome-text">Bienvenid@ {{ user.nombres }}</span>
-      <a href="{% url 'logout' %}" class="logout-btn">
-        <i class="fas fa-sign-out-alt"></i>Salir
+    <div class="user-info d-flex align-items-center">
+      <span class="welcome-text me-3">Bienvenid@ {{ user.nombres }}</span>
+      <a href="{% url 'logout' %}" class="logout-btn text-white text-decoration-none">
+        <i class="fas fa-sign-out-alt"></i> Salir
       </a>
     </div>
   </div>
 
 <!-- Barra de búsqueda -->
-<div class="search-bar" 
-     style="display: flex; align-items: center; gap: 12px; max-width: 500px; margin-top: 10px;">
-  <input 
-    type="text" 
-    id="searchInput" 
-    placeholder="Buscar por nombre, documento o comentario..." 
-    class="form-control"
-    style="flex: 1; padding: .4rem .6rem;"
-  >
-  <button id="searchBtn" class="btn btn-primary" style="padding: .4rem .75rem;">
-    <i class="fa fa-search"></i> Buscar
+<div class="search-bar d-flex align-items-center gap-2 px-3 mt-3" style="max-width: 500px;">
+  <div class="input-group">
+    <span class="input-group-text bg-white"><i class="fa fa-search"></i></span>
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Buscar por nombre, documento o comentario..." 
+      class="form-control"
+    >
+  </div>
+  <button id="searchBtn" class="btn btn-primary">
+    Buscar
   </button>
 </div>
 
@@ -39,26 +40,22 @@ document.getElementById('searchBtn').addEventListener('click', function() {
   realizarBusqueda();
 });
 
-// Opción: búsqueda mientras escribes (presionando Enter)
 document.getElementById('searchInput').addEventListener('keyup', function(e) {
   if (e.key === 'Enter') {
     realizarBusqueda();
   }
 });
 
-// Función principal de búsqueda
 function realizarBusqueda() {
   const filter = document.getElementById('searchInput').value.toLowerCase().trim();
   const rows = document.querySelectorAll('table tbody tr');
   let resultadosEncontrados = 0;
-  
-  // Primero, ocultar cualquier mensaje previo de "no hay resultados"
+
   const mensajeAnterior = document.getElementById('mensajeNoResultados');
   if (mensajeAnterior) {
     mensajeAnterior.remove();
   }
-  
-  // Buscar en las filas de la tabla
+
   rows.forEach(row => {
     const text = row.textContent.toLowerCase();
     if (text.includes(filter)) {
@@ -68,14 +65,12 @@ function realizarBusqueda() {
       row.style.display = 'none';
     }
   });
-  
-  // Mostrar mensaje si no hay resultados
+
   if (resultadosEncontrados === 0 && filter !== '') {
     mostrarMensajeNoResultados(filter);
   }
 }
 
-// Función para mostrar mensaje de no resultados
 function mostrarMensajeNoResultados(textoBuscado) {
   const tabla = document.querySelector('table');
   const mensaje = document.createElement('tr');
@@ -85,8 +80,6 @@ function mostrarMensajeNoResultados(textoBuscado) {
       No hay ningún resultado para "${textoBuscado}"
     </td>
   `;
-  
-  // Insertar el mensaje después de la tabla o en el tbody
   const tbody = document.querySelector('table tbody');
   if (tbody) {
     tbody.appendChild(mensaje);
@@ -98,83 +91,79 @@ function mostrarMensajeNoResultados(textoBuscado) {
 
   
   <!-- Contenido -->
+  <div style="width: 1500px; height: 580px; overflow: auto;" class="px-3 mt-3">
+    <div style="min-width: 1200px; padding: 20px;" class="bg-white rounded-3 shadow-sm">
+      <div class="solicitudes">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 fw-bold">Solicitudes de Constancias</h2>
+          <span class="badge bg-primary">{{ solicitudes|length }} solicitudes</span>
+        </div>
 
-    <!-- Listado de solicitudes en tabla -->
-     <div style="width: 1500px; height: 580px; overflow: auto;">
-      <div style="min-width: 1200px; padding: 20px;">
-    <div class="solicitudes">
-      <div class0="solicitudes-header">
-        <h2>Solicitudes de Constancias</h2>
-        <span class="badge-count">{{ solicitudes|length }} solicitudes</span>
-      </div>
-
-      <div class="table-container">
-        <table class="solicitudes-table">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Documento</th>
-              <th>Comentario</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in solicitudes %}
-            <tr class="solicitud-row " data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
-              <td>{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
-              <td>{{ s.usuario.numero_documento }}</td>
-              <td>{{ s.usuario. }}</td>
-              <td>
-                <span class="status-badge {{ s.estado }}">{{ s.get_estado_display }}</span>
-              </td>
-              <td class="action-buttons">
-                <button 
-                  type="button" 
-                  class="btn btn-sm btn-primary open-contrato-modal" 
-                  data-bs-toggle="modal" 
-                  data-bs-target="#contratoModal"
-                  data-user-id="{{ s.usuario.id }}">
-                  <i class="fa fa-cogs"></i>
-                </button>
-                <!-- botones secundarios -->
+        <div class="table-container">
+          <table class="solicitudes-table table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Usuario</th>
+                <th>Documento</th>
+                <th>Comentario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in solicitudes %}
+              <tr class="solicitud-row border rounded-3 shadow-sm" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+                <td class="fw-semibold">{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
+                <td>{{ s.usuario.numero_documento }}</td>
+                <td>{{ s.usuario. }}</td>
+                <td>
+                  <span class="status-badge {{ s.estado }} badge bg-secondary">{{ s.get_estado_display }}</span>
+                </td>
+                <td class="action-buttons d-flex gap-1">
                   <button 
-                  type="button" 
-                  class="btn btn-sm btn-secondary" 
-                  data-bs-target="#contratoModal"
-                  data-user-id="{{ s.usuario.id }}">
-                  <i class="fa fa-pen-nib"></i>
-                </button>
-                <button 
-                  type="button" 
-                  class="btn btn-sm btn-tercery"
-                  data-bs-target="#contratoModal"
-                  data-user-id="{{ s.usuario.id }}">
-                  <i class="fa fa fa-download"></i>
-                </button>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="6" class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <h3>No hay solicitudes</h3>
-                <p>No se encontraron solicitudes de constancias.</p>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                    type="button" 
+                    class="btn btn-sm btn-primary open-contrato-modal" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#contratoModal"
+                    data-user-id="{{ s.usuario.id }}">
+                    <i class="fa fa-cogs"></i>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-secondary" 
+                    data-bs-target="#contratoModal"
+                    data-user-id="{{ s.usuario.id }}">
+                    <i class="fa fa-pen-nib"></i>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-outline-dark"
+                    data-bs-target="#contratoModal"
+                    data-user-id="{{ s.usuario.id }}">
+                    <i class="fa fa-download"></i>
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="empty-state text-center py-5">
+                  <i class="fas fa-folder-open fa-2x mb-2"></i>
+                  <h3>No hay solicitudes</h3>
+                  <p class="mb-0">No se encontraron solicitudes de constancias.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
 {% comment %} =================== MODAL DE LISTA =================== {% endcomment %}
 <div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
-      <!-- Campo oculto para guardar el usuario seleccionado -->
       <input type="hidden" id="modal_usuario_id">
       
       <div class="modal-header d-flex justify-content-between align-items-center">
@@ -193,7 +182,6 @@ function mostrarMensajeNoResultados(textoBuscado) {
     </div>
   </div>
 </div>
-
 
 {% comment %} =================== MODAL DE FORMULARIO =================== {% endcomment %}
 <div class="modal fade" id="contratoFormModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -214,14 +202,12 @@ function mostrarMensajeNoResultados(textoBuscado) {
           </div>
 
           <div class="row g-3">
-            <!-- Número de contrato -->
             <div class="col-md-3">
               <label for="id_numero_contrato" class="form-label">Número de Contrato</label>
               <input type="text" class="form-control" id="id_numero_contrato" name="numero_contrato">
               <div class="form-text">Ingrese el número exacto del contrato.</div>
             </div>
 
-            <!-- Fechas -->
             <div class="col-md-3">
               <label for="id_fecha_inicio" class="form-label">Fecha Inicio</label>
               <input type="text" class="form-control" id="id_fecha_inicio" name="fecha_inicio" placeholder="dd/mm/aaaa">
@@ -237,14 +223,12 @@ function mostrarMensajeNoResultados(textoBuscado) {
               <input type="text" class="form-control" id="id_fecha_fin" name="fecha_fin" placeholder="dd/mm/aaaa">
             </div>
 
-            <!-- Valor -->
             <div class="col-md-4">
               <label for="id_valor_pago" class="form-label">Valor de Pago</label>
               <input type="text" class="form-control" id="id_valor_pago" name="valor_pago" placeholder="$...">
               <div class="form-text">Escriba el valor acordado del contrato.</div>
             </div>
 
-            <!-- PDF -->
             <div class="col-12">
               <label for="id_archivo" class="form-label">Archivo PDF</label>
               <input type="file" class="form-control" id="id_archivo" name="archivo" accept="application/pdf">
@@ -253,14 +237,12 @@ function mostrarMensajeNoResultados(textoBuscado) {
               </div>
             </div>
 
-            <!-- Objeto -->
             <div class="col-12 mt-3" id="wrapper_objeto" style="display:none;">
               <label for="id_objeto" class="form-label">Objeto</label>
               <textarea class="form-control" id="id_objeto" name="objeto" rows="3" readonly></textarea>
               <a href="#" id="edit_objeto" class="small text-primary">Editar</a>
             </div>
 
-            <!-- Objetivos Específicos -->
             <div class="col-12 mt-3" id="wrapper_objetivos" style="display:none;">
               <label for="id_objetivos_especificos" class="form-label">Objetivos Específicos</label>
               <textarea class="form-control" id="id_objetivos_especificos" name="objetivos_especificos" rows="3" readonly></textarea>
@@ -279,19 +261,17 @@ function mostrarMensajeNoResultados(textoBuscado) {
   </div>
 </div>
 
-
 {% comment %} =================== URLS para JS =================== {% endcomment %}
 <script>
   const csrfToken = "{{ csrf_token }}";
   const urls = {
     contratoCreate: "{% url 'documents:contrato_create_modal' %}",
     prefillContrato: "{% url 'documents:prefill_contrato' %}",
-    verContratosBase: "/documents/contratos/",  // se concatena con el ID
+    verContratosBase: "/documents/contratos/", 
     generateIndividual: "{% url 'documents:generate_individual' 0 %}".replace("0", "USER_ID"),
   };
 </script>
 
 <script src="{% static 'js/dashboard.js' %}"></script>
-
 
 {% endblock %}

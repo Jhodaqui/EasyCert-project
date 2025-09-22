@@ -2,118 +2,92 @@
 {% block content %}
 {% load static %}
 
-<!-- Botón para ocultar/mostrar menú -->
-<button onclick="toggleSidebar()" style="position:fixed;top:10px;left:260px;z-index:1000;">
-    ☰ Ocultar
-</button>
+<div class="container my-5">
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">
+      <i class="fas fa-users-cog me-2 text-primary"></i> Gestión de Roles
+    </h1>
+    <a href="{% url 'logout' %}" class="btn btn-danger">
+      <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
+    </a>
+  </div>
 
-<!-- Barra lateral fija -->
-<div id="sidebar" style="width:250px;position:fixed;top:0;left:0;height:100%;background:#2c3e50;overflow-x:hidden;transition:0.3s;padding-top:60px;z-index:999;">
-    <div style="padding:10px;">
-        <h3 style="color:#ecf0f1;">Opciones</h3>
+  <!-- Barra de búsqueda -->
+  <div class="input-group mb-4">
+    <span class="input-group-text"><i class="fas fa-search"></i></span>
+    <input 
+      type="text" 
+      id="searchInput" 
+      class="form-control" 
+      placeholder="Buscar usuario..." 
+      onkeyup="filterUsers()"
+    >
+  </div>
 
-        <button onclick="toggleSubmenu('rolesSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Roles</button>
-        <div id="rolesSub" style="display:none;margin-left:15px;">
-            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Ver Roles</a>
-            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Añadir Rol</a>
-        </div>
-
-        <button onclick="toggleSubmenu('usersSub')" style="width:100%;text-align:left;margin:5px 0;color:white;background:none;border:none;cursor:pointer;">▶ Usuarios</button>
-        <div id="usersSub" style="display:none;margin-left:15px;">
-            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Lista Usuarios</a>
-            <a href="#" style="display:block;color:#ecf0f1;margin:5px 0;">Historial</a>
-        </div>
-    </div>
-</div>
-
-<!-- Contenido principal -->
-<div class="roles-container" style="margin-left:270px;margin-top:50px;">
-    <div class="roles-header">
-        <h1 class="roles-title">Gestión de Roles</h1>
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i>Cerrar sesión
-        </a>
-    </div>
-
-    <!-- Barra de búsqueda -->
-    <input type="text" id="searchInput" placeholder="Buscar usuario..." 
-           onkeyup="filterUsers()" 
-           style="width:100%;padding:10px;margin:15px 0;border:1px solid #ccc;border-radius:6px;">
-
-    {% if users %}
-    <table class="roles-table" id="rolesTable">
-        <thead>
-            <tr>
-                <th>Usuario</th>
-                <th>Email</th>
-                <th>Rol actual</th>
-                <th>Cambiar rol</th>
-            </tr>
-        </thead>
-        <tbody>
+  <!-- Tabla de usuarios -->
+  {% if users %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle" id="rolesTable">
+      <thead class="table-dark">
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Rol actual</th>
+          <th>Cambiar rol</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for u in users %}
         <tr>
-            <td>{{ u.username }}</td>
-            <td>{{ u.email }}</td>
-            <td>
-                <span class="role-badge role-{{ u.role }}">
-                    {% if u.role == "user" %}Usuario{% endif %}
-                    {% if u.role == "staff" %}Staff{% endif %}
-                    {% if u.role == "admin" %}Admin{% endif %}
-                </span>
-            </td>
-            <td>
-                <form method="post" class="role-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <select name="role" class="role-select">
-                        <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
-                        <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
-                        <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
-                    </select>
-                    <button type="submit" class="update-btn">Actualizar</button>
-                </form>
-            </td>
+          <td>{{ u.nombres }} {{ u.apellidos }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.role == "user" %}
+              <span class="badge bg-secondary">Usuario</span>
+            {% elif u.role == "staff" %}
+              <span class="badge bg-info text-dark">Staff</span>
+            {% elif u.role == "admin" %}
+              <span class="badge bg-danger">Admin</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" class="d-flex align-items-center gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <select name="role" class="form-select form-select-sm w-auto">
+                <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
+                <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
+                <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-success">
+                <i class="fas fa-sync-alt"></i> Actualizar
+              </button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
-        </tbody>
+      </tbody>
     </table>
-    {% else %}
-    <div class="no-users">
-        <p>No hay usuarios registrados en el sistema.</p>
-    </div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div class="alert alert-warning text-center">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    No hay usuarios registrados en el sistema.
+  </div>
+  {% endif %}
 
-    <!-- Enlaces abajo -->
-    <div style="margin-top:30px;text-align:center;">
-        <a href="#" style="margin-right:20px;">➕ Añadir Roles</a>
-        <a href="#">📜 Historial de Roles</a>
-    </div>
+  <!-- Enlaces abajo -->
+  <div class="text-center mt-4">
+    <a href="#" class="btn btn-outline-primary">
+      <i class="fas fa-plus-circle me-1"></i> Añadir Roles
+    </a>
+  </div>
 </div>
+
 
 <!-- Scripts -->
 <script>
-function toggleSidebar() {
-    var sidebar = document.getElementById("sidebar");
-    var btn = document.querySelector("button[onclick='toggleSidebar()']");
-    if (sidebar.style.width === "0px") {
-        sidebar.style.width = "250px";
-        btn.style.left = "260px";
-        btn.innerText = "☰ Ocultar";
-        document.querySelector(".roles-container").style.marginLeft = "270px";
-    } else {
-        sidebar.style.width = "0px";
-        btn.style.left = "10px";
-        btn.innerText = "☰ Menú";
-        document.querySelector(".roles-container").style.marginLeft = "20px";
-    }
-}
-
-function toggleSubmenu(id) {
-    var submenu = document.getElementById(id);
-    submenu.style.display = submenu.style.display === "block" ? "none" : "block";
-}
-
 function filterUsers() {
     var input = document.getElementById("searchInput");
     var filter = input.value.toLowerCase();
