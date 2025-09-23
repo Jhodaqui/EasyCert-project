@@ -27,7 +27,7 @@
       <!-- Email -->
       <div class="mb-3 position-relative">
         <input type="email" class="form-control ps-5" id="id_email" name="email"
-               placeholder="Correo electrónico" value="{{ form.email.value|default:'' }}" required>
+              placeholder="Correo electrónico" value="{{ form.email.value|default:'' }}" required>
         <i class="fas fa-envelope position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
         {% if form.email.errors %}
           <div class="text-danger small mt-1">{{ form.email.errors }}</div>
@@ -37,7 +37,7 @@
       <!-- Password -->
       <div class="mb-3 position-relative">
         <input type="password" class="form-control ps-5" id="id_password" name="password"
-               placeholder="Contraseña" value="{{ form.password.value|default:'' }}" required>
+              placeholder="Contraseña" value="{{ form.password.value|default:'' }}" required>
         <i class="fas fa-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
         {% if form.password.errors %}
           <div class="text-danger small mt-1">{{ form.password.errors }}</div>

@@ -399,20 +399,30 @@ $(document).ready(function () {
 
     // Reemplazamos la alerta estándar por SweetAlert2
     Swal.fire({
-      title: 'Contrato guardado',
-      text: 'Ahora puedes subir otro.',
-      icon: 'success',
-      confirmButtonText: '¡Genial!',
-      draggable: true,
-      background: '#f0f8ff',  // Color de fondo suave
-      showCloseButton: true,
-      buttonsStyling: false,  // Desactivar estilos predeterminados de los botones
-      confirmButtonColor: '#4CAF50',  // Color personalizado del botón
-      closeButtonHtml: '&times;',  // Personaliza el icono de la "X" de cierre
-      padding: '20px',  // Relleno dentro de la alerta
-      width: '400px',  // Ancho de la alerta
-      heightAuto: false,  // Evita que la altura sea automática
-    });
+  title: 'Contrato guardado',
+  text: 'Ahora puedes subir otro.',
+  icon: 'success',
+  showConfirmButton: false,  // Eliminar el botón de confirmación
+  draggable: true,
+  background: '#f0f8ff',  // Color de fondo suave
+  showCloseButton: true,
+  buttonsStyling: false,  // Desactivar estilos predeterminados de los botones
+  closeButtonHtml: '&times;',  // Personaliza el icono de la "X" de cierre
+  padding: '20px',  // Relleno dentro de la alerta
+  width: '400px',  // Ancho de la alerta
+  heightAuto: false,  // Evita que la altura sea automática
+  timer: 2000,  // La alerta se cierra automáticamente después de 2 segundos
+  timerProgressBar: true,  // Muestra una barra de progreso mientras cuenta el tiempo
+  didClose: () => {  // Ejecutar una vez que la alerta se cierre
+    // Realiza alguna acción, si es necesario
+    console.log("Alerta cerrada automáticamente");
+  },
+  allowOutsideClick: false,  // No permitir que se cierre al hacer clic fuera de la alerta
+  allowEscapeKey: false,  // No permitir que se cierre con la tecla "Escape"
+  customClass: {
+    popup: 'animated fadeIn',  // Animación para la alerta al aparecer
+  },
+});
   });
 }
 });
