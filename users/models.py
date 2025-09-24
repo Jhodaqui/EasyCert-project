@@ -35,6 +35,11 @@ class municipios(models.Model):
         # mostramos municipio (pero el campo nombreCentro existe y lo usaremos para listar centros)
         return self.nombreMpio
 
+class Rol(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.nombre
 
 # ----------------------
 # User manager (igual que tenías)
@@ -43,7 +48,15 @@ class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("El usuario debe tener un correo electrónico")
+
         email = self.normalize_email(email)
+
+        from .models import Rol
+        # 🔹 Si no se pasa rol, asignar "Usuario"
+        if "role" not in extra_fields or extra_fields["role"] is None:
+            role, _ = Rol.objects.get_or_create(nombre="Usuario")
+            extra_fields["role"] = role
+
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -53,6 +66,12 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
+
+        from .models import Rol
+        # 🔹 Superuser siempre debe ser "Administrador"
+        role, _ = Rol.objects.get_or_create(nombre="Administrador")
+        extra_fields["role"] = role
+
         return self.create_user(email, password, **extra_fields)
 
 
@@ -60,12 +79,6 @@ class CustomUserManager(BaseUserManager):
 # CustomUser (añadidos departamento y centro)
 # ----------------------
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        ("admin", "Administrador"),
-        ("staff", "Funcionario"),
-        ("user", "Usuario"),
-    )
-
     # Campos personales
     nombres = models.CharField("Nombres", max_length=100)
     apellidos = models.CharField("Apellidos", max_length=100)
@@ -73,12 +86,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     numero_documento = models.CharField("Número de documento", max_length=15, unique=True)
     email = models.EmailField("Correo electrónico", unique=True)
 
-    # Rol (lo mantengo como lo tenías)
-    role = models.CharField("Rol de usuario", max_length=20, choices=ROLE_CHOICES, default="user")
+    # 🔹 Relación a roles dinámicos
+    role = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, blank=True, related_name="usuarios")
 
-    # Relación con departamento y centro (municipio.nombreCentro)
-    departamento = models.ForeignKey(dptos, on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios')
-    centro = models.ForeignKey(municipios, on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios_centro')
+    # Relación con departamento y centro
+    departamento = models.ForeignKey("dptos", on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios')
+    centro = models.ForeignKey("municipios", on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios_centro')
 
     # Estado
     is_active = models.BooleanField(default=True)
@@ -93,9 +106,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return f"{self.nombres} {self.apellidos} ({self.numero_documento})"
 
     def get_tipo_documento_display_full(self):
-        """Devuelve el texto completo del tipo de documento"""
         return dict(TIPOS_DOCUMENTO).get(self.tipo_documento, self.tipo_documento)
-
 
 # ----------------------
 # Constancia (igual que tenías)

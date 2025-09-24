@@ -43,22 +43,22 @@
           <td>{{ u.nombres }} {{ u.apellidos }}</td>
           <td>{{ u.email }}</td>
           <td>
-            {% if u.role == "user" %}
-              <span class="badge bg-secondary">Usuario</span>
-            {% elif u.role == "staff" %}
-              <span class="badge bg-info text-dark">Staff</span>
-            {% elif u.role == "admin" %}
-              <span class="badge bg-danger">Admin</span>
+            {% if u.role %}
+              <span class="badge bg-primary">{{ u.role.nombre }}</span>
+            {% else %}
+              <span class="badge bg-secondary">Sin rol</span>
             {% endif %}
           </td>
           <td>
             <form method="post" class="d-flex align-items-center gap-2">
               {% csrf_token %}
               <input type="hidden" name="user_id" value="{{ u.id }}">
-              <select name="role" class="form-select form-select-sm w-auto">
-                <option value="user" {% if u.role == "user" %}selected{% endif %}>Usuario</option>
-                <option value="staff" {% if u.role == "staff" %}selected{% endif %}>Staff</option>
-                <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+              <select name="role_id" class="form-select form-select-sm w-auto">
+                {% for r in roles %}
+                  <option value="{{ r.id }}" {% if u.role and u.role.id == r.id %}selected{% endif %}>
+                    {{ r.nombre }}
+                  </option>
+                {% endfor %}
               </select>
               <button type="submit" class="btn btn-sm btn-success">
                 <i class="fas fa-sync-alt"></i> Actualizar
@@ -77,11 +77,49 @@
   </div>
   {% endif %}
 
-  <!-- Enlaces abajo -->
+ <!-- Enlaces abajo -->
   <div class="text-center mt-4">
-    <a href="#" class="btn btn-outline-primary">
-      <i class="fas fa-plus-circle me-1"></i> Añadir Roles
-    </a>
+    <!-- Botón que abre el modal -->
+    <button 
+      type="button" 
+      class="btn btn-outline-primary" 
+      data-bs-toggle="modal" 
+      data-bs-target="#addRoleModal">
+      <i class="fas fa-plus-circle me-1"></i> Añadir Rol
+    </button>
+  </div>
+</div>
+
+<!-- Modal para añadir un nuevo rol -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'manage_roles' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="addRoleModalLabel">
+            <i class="fas fa-plus-circle me-2 text-primary"></i> Añadir Nuevo Rol
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nombreRol" class="form-label">Nombre del Rol</label>
+            <input type="text" class="form-control" id="nombreRol" name="nombre_rol" placeholder="Ejemplo: Coordinador" required>
+          </div>
+          <div class="mb-3">
+            <label for="descripcionRol" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcionRol" name="descripcion" rows="3" placeholder="Descripción del rol..."></textarea>
+          </div>
+          <!-- Campo oculto para diferenciar acción -->
+          <input type="hidden" name="action" value="add_role">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Rol</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
