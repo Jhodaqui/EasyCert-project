@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
@@ -13,11 +13,12 @@ from .utils import crear_carpetas as crear_CarpetasUsuario
 from django.template.loader import render_to_string
 from django.http import JsonResponse, HttpResponse
 
+
 from .forms import RegisterForm, LoginForm, ConstanciaForm, BulkUploadForm, MunicipiosUploadForm
 import io
 import csv
 import pandas as pd
-from .models import CustomUser, Constancia, municipios, dptos
+from .models import CustomUser, Constancia, municipios, dptos, Rol
 from datetime import date
 
 # correo 
@@ -82,7 +83,7 @@ def cargar_centros(request):
 # Login
 def login_view(request):
     form = LoginForm(request.POST or None)
-    field_errors = {}  # Diccionario para errores específicos por campo
+    field_errors = {}
 
     if request.method == "POST":
         if form.is_valid():
@@ -94,30 +95,25 @@ def login_view(request):
                 if user.is_active:
                     login(request, user)
 
-                    # Redirección según rol
-                    if user.role == "admin":
+                    # 🔹 Redirección según el nombre del rol
+                    if user.role and user.role.nombre == "Administrador":
                         return redirect("admin_dashboard")
-                    elif user.role == "staff":
+                    elif user.role and user.role.nombre == "Funcionario":
                         return redirect("staff_dashboard")
                     else:
                         return redirect("user_dashboard")
                 else:
-                    # Error específico para cuenta no activada
-                    field_errors['general'] = "⏳ Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico para activarla."
+                    field_errors['general'] = "⏳ Tu cuenta aún no está activada."
             else:
-                # Error específico para credenciales incorrectas
-                field_errors['general'] = "🔒 Correo electrónico o contraseña incorrectos. Verifica tus credenciales e intenta nuevamente."
+                field_errors['general'] = "🔒 Correo electrónico o contraseña incorrectos."
         else:
-            # Capturar errores de validación del formulario por campo
             for field, errors in form.errors.items():
                 field_errors[field] = " ".join(errors)
-    
-    # Enviamos el form y los errores al template
+
     return render(request, "users/login.html", {
         "form": form,
         "field_errors": field_errors
     })
-
 
 # Logout
 def logout_view(request):
@@ -291,7 +287,7 @@ def datos_bulk_upload(request):
     # 📌 Mostrar datos existentes
     # ==============================
     User = get_user_model()
-    users = User.objects.exclude(role="admin")  # Ocultar admins
+    users = User.objects.exclude(role_id="1")  # Ocultar admins
     mpio = municipios.objects.select_related("idDepto").all()
 
     return render(request, "users/admin/datos_bulk_upload.html", {
@@ -423,19 +419,29 @@ def user_dashboard_solicitud(request):
 # Gestión de roles (solo para admins)
 @login_required
 def manage_roles(request):
-    if request.user.role != "admin":
-        return redirect("home")  # seguridad, no dejar que otro entre
-    
+    # ✅ Verificamos que solo los usuarios con rol "Administrador" puedan acceder
+    if not request.user.role or request.user.role.nombre.lower() != "administrador":
+        return redirect("admin_dashboard")  
+
     users = CustomUser.objects.all()
+    roles = Rol.objects.all()  # ✅ Para listarlos en el template
+
     if request.method == "POST":
         user_id = request.POST.get("user_id")
-        new_role = request.POST.get("role")
+        new_role_id = request.POST.get("role_id")
+
         try:
             user = CustomUser.objects.get(id=user_id)
-            user.role = new_role
+            new_role = get_object_or_404(Rol, id=new_role_id)  # obtenemos el objeto Roll
+            user.role = new_role  # ✅ ahora asignamos el objeto, no un string
             user.save()
         except CustomUser.DoesNotExist:
             pass
+
         return redirect("manage_roles")
 
-    return render(request, "users/roles/manage_roles.html", {"users": users})
+    return render(
+        request,
+        "users/roles/manage_roles.html",
+        {"users": users, "roles": roles},
+    )
