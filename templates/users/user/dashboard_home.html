@@ -83,7 +83,7 @@
 
 <!-- Modal Bootstrap -->
 <div class="modal fade" id="formularioModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content shadow">
       <div class="modal-header">
         <h5 class="modal-title">
@@ -97,7 +97,6 @@
     </div>
   </div>
 </div>
-
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -239,45 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // --- Mostrar errores en campos
-  function showFormErrors(form, errors) {
-    form.querySelectorAll('.is-invalid, .invalid-feedback').forEach(el => {
-      if (el.classList) el.classList.remove('is-invalid');
-      if (el.classList && el.classList.contains('invalid-feedback')) el.remove();
-    });
-
-    for (const field in errors) {
-      const fieldElement = form.querySelector(`[name="${field}"]`);
-      if (fieldElement) {
-        fieldElement.classList.add('is-invalid');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'invalid-feedback';
-        errorDiv.innerHTML = errors[field].join('<br>');
-        fieldElement.parentNode.appendChild(errorDiv);
-      } else if (field === '__all__') {
-        form.insertAdjacentHTML('afterbegin', `
-          <div class="alert alert-danger">
-            ${errors[field].join('<br>')}
-          </div>
-        `);
-      }
-    }
-  }
-
-  // --- Solo reset cuando se cierra el modal (sin recargar)
-  modalEl.addEventListener("hidden.bs.modal", function () {
-    const form = document.getElementById("constanciaForm");
-    if (form) {
-      form.reset();
-      form.querySelectorAll('input, textarea, select').forEach(input => {
-        try { input.defaultValue = input.value; } catch(e){/* ignore */ }
-      });
-    }
-    formDirty = false;
-    formOpened = false;
-  });
-
-  // --- Obtener CSRF token
+  // Función auxiliar para obtener el valor de la cookie
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -294,7 +255,4 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
-
-
-
-{% endblock%}
+{% endblock %}

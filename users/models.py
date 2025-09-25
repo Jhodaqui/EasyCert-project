@@ -5,6 +5,8 @@ from django.contrib.auth.models import (
 )
 from django.conf import settings
 
+from certificates import apps
+
 TIPOS_DOCUMENTO = [
     ('CC', 'Cédula de ciudadanía'),
     ('TI', 'Tarjeta de identidad'),
@@ -37,6 +39,7 @@ class municipios(models.Model):
 
 class Rol(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nombre
@@ -51,8 +54,9 @@ class CustomUserManager(BaseUserManager):
 
         email = self.normalize_email(email)
 
-        from .models import Rol
-        # 🔹 Si no se pasa rol, asignar "Usuario"
+        Rol = apps.get_model("users", "Rol")  # evita import circular
+
+        # 🔹 Si no se pasa role, asignar "Usuario"
         if "role" not in extra_fields or extra_fields["role"] is None:
             role, _ = Rol.objects.get_or_create(nombre="Usuario")
             extra_fields["role"] = role
@@ -67,13 +71,13 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
 
-        from .models import Rol
-        # 🔹 Superuser siempre debe ser "Administrador"
+        Rol = apps.get_model("users", "Rol")
+
+        # 🔹 Superuser siempre con rol "Administrador"
         role, _ = Rol.objects.get_or_create(nombre="Administrador")
         extra_fields["role"] = role
 
         return self.create_user(email, password, **extra_fields)
-
 
 # ----------------------
 # CustomUser (añadidos departamento y centro)

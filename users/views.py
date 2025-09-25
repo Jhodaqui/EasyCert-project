@@ -417,31 +417,68 @@ def user_dashboard_solicitud(request):
     )
 
 # Gestión de roles (solo para admins)
+# views.py
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
+from .models import Rol
+
+# Gestión de roles (solo para admins)
 @login_required
 def manage_roles(request):
-    # ✅ Verificamos que solo los usuarios con rol "Administrador" puedan acceder
+    # Verificamos que solo los usuarios con rol "Administrador" puedan acceder
     if not request.user.role or request.user.role.nombre.lower() != "administrador":
         return redirect("admin_dashboard")  
 
     users = CustomUser.objects.all()
-    roles = Rol.objects.all()  # ✅ Para listarlos en el template
+    roles = Rol.objects.all()  # Para listarlos en el template
 
+    # Si se recibe una solicitud POST para eliminar o agregar un rol
     if request.method == "POST":
-        user_id = request.POST.get("user_id")
-        new_role_id = request.POST.get("role_id")
+        action = request.POST.get("action")
+        
+        # Si la acción es para eliminar un rol
+        if action == "delete_role":
+            role_id = request.POST.get("role_id")
+            try:
+                role = Rol.objects.get(id=role_id)
+                role.delete()  # Eliminamos el rol de la base de datos
+                messages.success(request, f"Rol '{role.nombre}' eliminado exitosamente.")
+            except Rol.DoesNotExist:
+                messages.error(request, "El rol que intentas eliminar no existe.")
+        
+        # Si la acción es para agregar un nuevo rol
+        elif action == "add_role":
+            nombre_rol = request.POST.get("nombre_rol")
+            descripcion_rol = request.POST.get("descripcion")
+            
+            if nombre_rol:
+                # Creamos el nuevo rol
+                new_role = Rol.objects.create(
+                    nombre=nombre_rol,
+                    descripcion=descripcion_rol
+                )
+                messages.success(request, f"Rol '{new_role.nombre}' creado exitosamente.")
+            else:
+                messages.error(request, "El nombre del rol es obligatorio.")
+        
+        # Si se está asignando un rol a un usuario
+        elif "user_id" in request.POST and "role_id" in request.POST:
+            user_id = request.POST.get("user_id")
+            new_role_id = request.POST.get("role_id")
 
-        try:
-            user = CustomUser.objects.get(id=user_id)
-            new_role = get_object_or_404(Rol, id=new_role_id)  # obtenemos el objeto Roll
-            user.role = new_role  # ✅ ahora asignamos el objeto, no un string
-            user.save()
-        except CustomUser.DoesNotExist:
-            pass
-
-        return redirect("manage_roles")
+            try:
+                user = CustomUser.objects.get(id=user_id)
+                new_role = get_object_or_404(Rol, id=new_role_id)  # obtenemos el objeto Rol
+                user.role = new_role  # Asignamos el objeto Rol al usuario
+                user.save()
+                messages.success(request, f"Rol de {user.nombres} {user.apellidos} actualizado a '{new_role.nombre}'.")
+            except CustomUser.DoesNotExist:
+                messages.error(request, "Usuario no encontrado.")
+        
+        return redirect("manage_roles")  # Redirigimos de nuevo a la página de gestión de roles
 
     return render(
         request,
-        "users/roles/manage_roles.html",
+        "users/roles/manage_roles.html",  # Ruta al template
         {"users": users, "roles": roles},
     )

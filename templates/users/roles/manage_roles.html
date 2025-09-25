@@ -13,81 +13,128 @@
     </a>
   </div>
 
-  <!-- Barra de búsqueda -->
+  <!-- Barra de búsqueda (usuarios) en la parte superior -->
   <div class="input-group mb-4">
     <span class="input-group-text"><i class="fas fa-search"></i></span>
     <input 
       type="text" 
       id="searchInput" 
       class="form-control" 
-      placeholder="Buscar usuario..." 
+      placeholder="Buscar usuario por nombre o email..." 
       onkeyup="filterUsers()"
     >
   </div>
 
-  <!-- Tabla de usuarios -->
-  {% if users %}
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle" id="rolesTable">
-      <thead class="table-dark">
-        <tr>
-          <th>Usuario</th>
-          <th>Email</th>
-          <th>Rol actual</th>
-          <th>Cambiar rol</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>{{ u.nombres }} {{ u.apellidos }}</td>
-          <td>{{ u.email }}</td>
-          <td>
-            {% if u.role %}
-              <span class="badge bg-primary">{{ u.role.nombre }}</span>
-            {% else %}
-              <span class="badge bg-secondary">Sin rol</span>
-            {% endif %}
-          </td>
-          <td>
-            <form method="post" class="d-flex align-items-center gap-2">
-              {% csrf_token %}
-              <input type="hidden" name="user_id" value="{{ u.id }}">
-              <select name="role_id" class="form-select form-select-sm w-auto">
-                {% for r in roles %}
-                  <option value="{{ r.id }}" {% if u.role and u.role.id == r.id %}selected{% endif %}>
-                    {{ r.nombre }}
-                  </option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-success">
-                <i class="fas fa-sync-alt"></i> Actualizar
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Tabla de usuarios (solo se muestra si hay búsqueda) -->
+  <div id="usersSection" style="display:none;">
+    {% if users %}
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <i class="fas fa-users me-2"></i> Usuarios encontrados
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle" id="rolesTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol actual</th>
+                <th>Cambiar rol</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>{{ u.nombres }} {{ u.apellidos }}</td>
+                <td>{{ u.email }}</td>
+                <td>
+                  {% if u.role %}
+                    <span class="badge bg-primary">{{ u.role.nombre }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Sin rol</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="action" value="update_role">
+                    <select name="role_id" class="form-select form-select-sm w-auto">
+                      {% for r in roles %}
+                        <option value="{{ r.id }}" {% if u.role and u.role.id == r.id %}selected{% endif %}>
+                          {{ r.nombre }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-success">
+                      <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="alert alert-warning text-center">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    No hay usuarios registrados en el sistema.
-  </div>
-  {% endif %}
 
- <!-- Enlaces abajo -->
-  <div class="text-center mt-4">
-    <!-- Botón que abre el modal -->
-    <button 
-      type="button" 
-      class="btn btn-outline-primary" 
-      data-bs-toggle="modal" 
-      data-bs-target="#addRoleModal">
-      <i class="fas fa-plus-circle me-1"></i> Añadir Rol
-    </button>
+  <!-- Tabla de roles creados -->
+  <div class="card mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <i class="fas fa-layer-group me-2"></i> Roles Creados
+      <button 
+        type="button" 
+        class="btn btn-outline-primary" 
+        data-bs-toggle="modal" 
+        data-bs-target="#addRoleModal">
+        <i class="fas fa-plus-circle me-1"></i> Añadir Rol
+      </button>
+    </div>
+    <div class="card-body">
+      {% if roles %}
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle text-center">
+          <thead class="table-secondary">
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in roles %}
+            <tr>
+              <td>{{ r.nombre }}</td>
+              <td>{{ r.descripcion }}</td>
+              <td>
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="role_id" value="{{ r.id }}">
+                  <input type="hidden" name="action" value="delete_role">
+                  <button type="submit" class="btn btn-sm btn-danger"
+                          onclick="return confirm('¿Seguro que deseas eliminar este rol?')">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="alert alert-warning text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          No hay roles creados aún.
+        </div>
+      {% endif %}
+    </div>
   </div>
+
 </div>
 
 <!-- Modal para añadir un nuevo rol -->
@@ -111,7 +158,6 @@
             <label for="descripcionRol" class="form-label">Descripción</label>
             <textarea class="form-control" id="descripcionRol" name="descripcion" rows="3" placeholder="Descripción del rol..."></textarea>
           </div>
-          <!-- Campo oculto para diferenciar acción -->
           <input type="hidden" name="action" value="add_role">
         </div>
         <div class="modal-footer">
@@ -123,22 +169,28 @@
   </div>
 </div>
 
-
 <!-- Scripts -->
 <script>
 function filterUsers() {
     var input = document.getElementById("searchInput");
     var filter = input.value.toLowerCase();
-    var trs = document.getElementById("rolesTable").getElementsByTagName("tr");
+    var usersSection = document.getElementById("usersSection");
+    var trs = document.querySelectorAll("#rolesTable tbody tr");
 
-    for (var i = 1; i < trs.length; i++) {
-        var tdUser = trs[i].getElementsByTagName("td")[0];
-        var tdEmail = trs[i].getElementsByTagName("td")[1];
+    if (filter.length > 0) {
+        usersSection.style.display = "block";
+    } else {
+        usersSection.style.display = "none";
+    }
+
+    trs.forEach(function(row) {
+        var tdUser = row.getElementsByTagName("td")[0];
+        var tdEmail = row.getElementsByTagName("td")[1];
         if (tdUser && tdEmail) {
             var txtValue = tdUser.textContent.toLowerCase() + " " + tdEmail.textContent.toLowerCase();
-            trs[i].style.display = txtValue.indexOf(filter) > -1 ? "" : "none";
+            row.style.display = txtValue.indexOf(filter) > -1 ? "" : "none";
         }
-    }
+    });
 }
 </script>
 
