@@ -1,6 +1,6 @@
 import os
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, JsonResponse , HttpResponseBadRequest
+from django.http import FileResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -12,7 +12,7 @@ from io import BytesIO
 from .forms import ContratoUploadForm, ContratoModalForm
 from .models import TempExtractedData, UserContractData, Contrato
 from users.models import CustomUser
-from .utils import extract_key_value_from_pdf, extract_contract_metadata, generate_individual_package
+from .utils import extract_key_value_from_pdf, extract_contract_metadata, generate_individual_package, generate_block_package
 from django.conf import settings
 
 # para pruebas de pdf
@@ -406,4 +406,34 @@ def generate_individual_documents(request, user_id):
         response = FileResponse(open(zip_path, "rb"), as_attachment=True, filename=os.path.basename(zip_path))
         return response
     except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    
+# crear certificado por bloques
+@login_required
+@require_POST
+def generate_block_documents(request, user_id):
+    """
+    Genera todos los contratos seleccionados en BLOQUE (un único .docx),
+    empaca con el Excel y devuelve un ZIP.
+    """
+    usuario = get_object_or_404(CustomUser, id=user_id)
+
+    selected = request.POST.get("selected_ids", "")
+    contratos_qs = Contrato.objects.filter(usuario=usuario)
+    if selected:
+        ids = [int(x) for x in selected.split(",") if x.strip().isdigit()]
+        contratos_qs = contratos_qs.filter(id__in=ids)
+
+    if not contratos_qs.exists():
+        return JsonResponse({"ok": False, "error": "No se encontraron contratos para generar."}, status=400)
+
+    template_path = os.path.join(settings.BASE_DIR, "templates", "base", "boceto para pruebas.docx")
+    if not os.path.isfile(template_path):
+        return JsonResponse({"ok": False, "error": "Plantilla boceto no encontrada en templates/base/."}, status=500)
+
+    try:
+        zip_path = generate_block_package(usuario, contratos_qs, template_path)
+        return FileResponse(open(zip_path, "rb"), as_attachment=True, filename=os.path.basename(zip_path))
+    except Exception as e:
+        # registra/loguea si tienes logger
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
