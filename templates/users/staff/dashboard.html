@@ -269,6 +269,7 @@ function mostrarMensajeNoResultados(textoBuscado) {
     prefillContrato: "{% url 'documents:prefill_contrato' %}",
     verContratosBase: "/documents/contratos/", 
     generateIndividual: "{% url 'documents:generate_individual' 0 %}".replace("0", "USER_ID"),
+    generateBlock: "{% url 'documents:generate_block_documents' user_id=0 %}".replace("0", "USER_ID"),
   };
 </script>
 

@@ -1,13 +1,18 @@
 import os 
+import tempfile
+import shutil
 import zipfile
-from io import BytesIO
-from django.conf import settings
+import pdfplumber
+import unicodedata
+import re
 import pandas as pd
+
+from django.conf import settings
 from mailmerge import MailMerge
 from django.utils.text import slugify
-import pdfplumber
-import re
 from datetime import date
+from io import BytesIO
+from docx import Document
 
 SPANISH_MONTHS = {
     "enero":1,"febrero":2,"marzo":3,"abril":4,"mayo":5,"junio":6,
@@ -284,4 +289,112 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
 
     return zip_path
 
+# generacion de certificado por bloques 
 
+def _safe_filename(name: str) -> str:
+    """Convierte un string a un nombre de archivo seguro."""
+    if not name:
+        return "sin_numero"
+    name = str(name)
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    name = re.sub(r"[^\w\s\-]", "", name).strip()
+    name = re.sub(r"[\s]+", "_", name)
+    return name[:180]
+
+def _clean_multiline_text(text: str) -> str:
+    """Limpia saltos de línea repetidos y normaliza texto para docx."""
+    if not text:
+        return ""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    # quita dobles saltos
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    return text
+
+def _format_as_singleline(text: str) -> str:
+    """Convierte texto multilínea a una sola línea (útil para Excel)."""
+    if not text:
+        return ""
+    return " ".join(_clean_multiline_text(text).splitlines())
+
+def generate_block_package(usuario, contratos_qs, template_docx_path):
+    """
+    Genera:
+      - Un único Word (contratos_bloque.docx) con todos los contratos concatenados (sin saltos de página adicionales)
+      - Un Excel de control (contratos.xlsx)
+      - Empaqueta ambos en un ZIP y devuelve la ruta absoluta del ZIP
+    """
+    if not contratos_qs.exists():
+        raise ValueError("No hay contratos para generar.")
+
+    # carpeta destino: media/usuarios/<documento>/bloques/
+    base_folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento or "sin_documento", "bloques")
+    os.makedirs(base_folder, exist_ok=True)
+
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        # --- Generar Excel de control ---
+        rows = []
+        for c in contratos_qs:
+            rows.append({
+                "NUMERO_CONTRATO": c.numero_contrato or "",
+                "FECHA_GENERACION": str(c.fecha_generacion or "").strip(),
+                "FECHA_INICIO": str(c.fecha_inicio or "").strip(),
+                "FECHA_FINAL": str(c.fecha_fin or "").strip(),
+                "VALOR_PAGO": str(c.valor_pago or "").strip(),
+                "OBJETO": _format_as_singleline(c.objeto),
+                "OBJETIVOS_ESPECIFICOS": _clean_multiline_text(c.objetivos_especificos),
+                "CONTRATO_ID": c.id,
+                "NOMBRE_COMPLETO": f"{getattr(usuario, 'nombres', '') or ''} {getattr(usuario, 'apellidos', '') or ''}".strip(),
+                "TIPO_DOCUMENTO": getattr(usuario, "get_tipo_documento_display_full", lambda: "")(),
+                "NUMERO_DOCUMENTO": usuario.numero_documento or "",
+                "EMAIL": usuario.email or "",
+            })
+
+        df = pd.DataFrame(rows)
+        excel_path = os.path.join(temp_dir, "contratos.xlsx")
+        df.to_excel(excel_path, index=False, engine="openpyxl")
+
+        # --- Generar DOCX individuales (temporales) con MailMerge ---
+        temp_docs = []
+        for row, contrato in zip(rows, contratos_qs):
+            nro = row.get("NUMERO_CONTRATO") or f"id{row.get('CONTRATO_ID')}"
+            out_path = os.path.join(temp_dir, f"{_safe_filename(nro)}.docx")
+
+            with MailMerge(template_docx_path) as m:
+                # los campos que van al merge
+                safe_row = {k: (v if v is not None else "") for k, v in row.items()}
+                safe_row.pop("CONTRATO_ID", None)
+                # para el campo OBJETO preferimos mantener saltos (alineado con plantilla)
+                safe_row["OBJETO"] = _clean_multiline_text(getattr(contrato, "objeto", ""))
+
+                m.merge(**safe_row)
+                m.write(out_path)
+
+            temp_docs.append(out_path)
+
+        # --- Concatenar todos los .docx en uno solo (manteniendo estilo de plantilla) ---
+        # Usamos el primer doc como "master"
+        master_doc = Document(temp_docs[0])
+
+        # Append elements from subsequent docs to master.body
+        for extra_doc_path in temp_docs[1:]:
+            subdoc = Document(extra_doc_path)
+            for element in subdoc.element.body:
+                master_doc.element.body.append(element)
+
+        bloque_path = os.path.join(temp_dir, "contratos_bloque.docx")
+        master_doc.save(bloque_path)
+
+        # --- Crear ZIP con el Excel y el docx bloque ---
+        zip_name = f"contratos_bloque_{usuario.numero_documento or 'sin_documento'}.zip"
+        zip_path = os.path.join(base_folder, zip_name)
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(excel_path, arcname="contratos.xlsx")
+            zf.write(bloque_path, arcname="contratos_bloque.docx")
+
+        return zip_path
+
+    finally:
+        # limpiar temporales
+        shutil.rmtree(temp_dir, ignore_errors=True)

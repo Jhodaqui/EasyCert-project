@@ -139,11 +139,52 @@ $(document).ready(function () {
       };
     }
 
-    // Generar en Bloque (placeholder)
+    // Generar en Bloque (ZIP con un único Word concatenado + Excel)
     const btnBloque = document.getElementById("generarBloque");
     if (btnBloque) {
-      btnBloque.onclick = function () {
-        alert("📦 Aquí se generarán constancias para TODOS los contratos seleccionados (en bloque).");
+      btnBloque.onclick = async function () {
+        const seleccionados = Array.from(document.querySelectorAll("#contratosCargadosWrapper .contrato-checkbox:checked"))
+          .map(cb => cb.value);
+
+        if (seleccionados.length === 0) {
+          alert("⚠️ Selecciona al menos un contrato.");
+          return;
+        }
+
+        // UX: bloquear mientras genera
+        btnBloque.disabled = true;
+        const originalText = btnBloque.textContent;
+        btnBloque.textContent = "Generando...";
+
+        try {
+          const res = await fetch(urls.generateBlock.replace("USER_ID", userId), {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: new URLSearchParams({ selected_ids: seleccionados.join(",") })
+          });
+
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => null);
+            throw new Error(errJson && errJson.error ? errJson.error : "Error en el servidor");
+          }
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "contratos_bloque.zip"; // nombre de archivo sugerido
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+
+        } catch (err) {
+          console.error(err);
+          alert("❌ Error generando paquete por bloques: " + (err.message || ""));
+        } finally {
+          btnBloque.disabled = false;
+          btnBloque.textContent = originalText;
+        }
       };
     }
 
