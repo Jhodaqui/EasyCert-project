@@ -2,34 +2,40 @@
 {% block content %}
 {% load static %}
 
-<div class="container my-5">
-  <!-- Encabezado -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold">
-      <i class="fas fa-users-cog me-2 text-primary"></i> Gestión de Roles
+<!-- Header que ocupa toda la parte superior -->
+<header class="p-4" style="background-color: #39A900;">
+  <div class="container d-flex justify-content-between align-items-center">
+    <h1 class="fw-bold text-white">
+      <i class="fas fa-users-cog me-2"></i> Gestión de Roles
     </h1>
-    <a href="{% url 'logout' %}" class="btn btn-danger">
-      <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
-    </a>
+    <div class="d-flex gap-3 align-items-center">
+      <!-- Barra de búsqueda (usuarios) -->
+      <div class="input-group">
+        <span class="input-group-text" style="background-color: #00304D; color: white;">
+          <i class="fas fa-search"></i>
+        </span>
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="form-control" 
+          placeholder="Buscar usuario por nombre o email..." 
+          onkeyup="filterUsers()"
+        >
+      </div>
+      <!-- Botón de cerrar sesión -->
+      <a href="{% url 'logout' %}" class="btn btn-danger">
+        <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
+      </a>
+    </div>
   </div>
+</header>
 
-  <!-- Barra de búsqueda (usuarios) en la parte superior -->
-  <div class="input-group mb-4">
-    <span class="input-group-text"><i class="fas fa-search"></i></span>
-    <input 
-      type="text" 
-      id="searchInput" 
-      class="form-control" 
-      placeholder="Buscar usuario por nombre o email..." 
-      onkeyup="filterUsers()"
-    >
-  </div>
-
+<div class="container my-5">
   <!-- Tabla de usuarios (solo se muestra si hay búsqueda) -->
   <div id="usersSection" style="display:none;">
     {% if users %}
     <div class="card mb-4">
-      <div class="card-header bg-info text-white">
+      <div class="card-header" style="background-color: #007832; color: white;">
         <i class="fas fa-users me-2"></i> Usuarios encontrados
       </div>
       <div class="card-body">
@@ -84,11 +90,11 @@
 
   <!-- Tabla de roles creados -->
   <div class="card mb-4">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <div class="card-header" style="background-color: #00304D; color: white;" class="d-flex justify-content-between align-items-center">
       <i class="fas fa-layer-group me-2"></i> Roles Creados
       <button 
         type="button" 
-        class="btn btn-outline-primary" 
+        class="btn btn-light"
         data-bs-toggle="modal" 
         data-bs-target="#addRoleModal">
         <i class="fas fa-plus-circle me-1"></i> Añadir Rol
