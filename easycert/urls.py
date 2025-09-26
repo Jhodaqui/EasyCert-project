@@ -26,6 +26,9 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("documents/", include("documents.urls")),
     path("certificates/", include("certificates.urls")),
+
+    # Agrega esta línea para django-browser-reload
+    path("__reload__/", include("django_browser_reload.urls")),
 ]
 
 if settings.DEBUG:
