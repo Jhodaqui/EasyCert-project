@@ -10,3 +10,5 @@ docx-mailmerge
 weasyprint
 reportlab
 openpyxl
+django-tailwind
+django-browser-reload

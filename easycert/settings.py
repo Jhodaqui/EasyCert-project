@@ -20,6 +20,7 @@ from django.contrib.messages import constants as messages
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
+NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,9 +47,13 @@ INSTALLED_APPS = [
     'users',
     'certificates',
     'documents',
-   
-    
+    "tailwind",
+    "theme",              
+    "django_browser_reload"
 ]
+
+TAILWIND_APP_NAME = 'theme'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
 ROOT_URLCONF = 'easycert.urls'

@@ -21,6 +21,7 @@ urlpatterns = [
     path("datos/upload/", datos_bulk_upload, name="datos_bulk_upload"),
     path("staff-dashboard/", staff_dashboard, name="staff_dashboard"),
     path("user-dashboard/", user_dashboard, name="user_dashboard"),
+    
     path("formulario-constancia/", mostrar_formulario_constancia, name="formulario_constancia"),
     path("procesar-constancia/", procesar_constancia, name="procesar_constancia"),
 
