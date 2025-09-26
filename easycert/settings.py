@@ -20,6 +20,7 @@ from django.contrib.messages import constants as messages
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
+NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 
 
 # Quick-start development settings - unsuitable for production
