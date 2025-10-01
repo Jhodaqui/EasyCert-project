@@ -1,155 +1,95 @@
 {% extends "base.html" %}
-{% block content %}
 {% load static %} 
-<div class="dashboard">
+{% block content %}
+<div class="p-6" x-data="dashboard()">
+
   <!-- Header -->
-  <div class="header d-flex justify-content-between align-items-center px-3 py-2" style="background-color:#04364A; color:white;">
-    <div class="header-left d-flex align-items-center">
-      <div class="logo-container d-flex align-items-center">
-        <img src="/static/img/sena-logo.png" alt="sena Logo" class="logo-img" style="height:40px; margin-right:10px;">
-        <span class="logo-text fw-bold">EASYCERT</span>
-      </div>
+  <div class="flex justify-between items-center px-3 py-2 bg-[#04364A] text-white rounded-t-lg">
+    <div class="flex items-center">
+      <img src="{% static 'img/sena-logo.png' %}" alt="sena Logo" class="h-10 mr-2">
+      <span class="font-bold">EASYCERT</span>
     </div>
-    <div class="user-info d-flex align-items-center">
-      <span class="welcome-text me-3">Bienvenid@ {{ user.nombres }}</span>
-      <a href="{% url 'logout' %}" class="logout-btn text-white text-decoration-none">
-        <i class="fas fa-sign-out-alt"></i> Salir
+    <div class="flex items-center space-x-4">
+      <span>Bienvenid@ {{ user.nombres }}</span>
+      <a href="{% url 'logout' %}" class="flex items-center space-x-1 text-white hover:underline">
+        <i class="fas fa-sign-out-alt"></i><span>Salir</span>
       </a>
     </div>
   </div>
 
-<!-- Barra de búsqueda -->
-<div class="search-bar d-flex align-items-center gap-2 px-3 mt-3" style="max-width: 500px;">
-  <div class="input-group">
-    <span class="input-group-text bg-white"><i class="fa fa-search"></i></span>
+  <!-- Barra de búsqueda -->
+  <div class="flex justify-between items-center my-4">
     <input 
       type="text" 
-      id="searchInput" 
-      placeholder="Buscar por nombre, documento o comentario..." 
-      class="form-control"
+      placeholder="Buscar contratos..." 
+      class="w-full sm:w-1/3 rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+      x-model="search"
     >
   </div>
-  <button id="searchBtn" class="btn btn-primary">
-    Buscar
-  </button>
-</div>
 
-<script>
-  // JS para hacer funcional la búsqueda
-document.getElementById('searchBtn').addEventListener('click', function() {
-  realizarBusqueda();
-});
-
-document.getElementById('searchInput').addEventListener('keyup', function(e) {
-  if (e.key === 'Enter') {
-    realizarBusqueda();
-  }
-});
-
-function realizarBusqueda() {
-  const filter = document.getElementById('searchInput').value.toLowerCase().trim();
-  const rows = document.querySelectorAll('table tbody tr');
-  let resultadosEncontrados = 0;
-
-  const mensajeAnterior = document.getElementById('mensajeNoResultados');
-  if (mensajeAnterior) {
-    mensajeAnterior.remove();
-  }
-
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    if (text.includes(filter)) {
-      row.style.display = '';
-      resultadosEncontrados++;
-    } else {
-      row.style.display = 'none';
-    }
-  });
-
-  if (resultadosEncontrados === 0 && filter !== '') {
-    mostrarMensajeNoResultados(filter);
-  }
-}
-
-function mostrarMensajeNoResultados(textoBuscado) {
-  const tabla = document.querySelector('table');
-  const mensaje = document.createElement('tr');
-  mensaje.id = 'mensajeNoResultados';
-  mensaje.innerHTML = `
-    <td colspan="100%" style="text-align: center; padding: 20px; font-style: italic;">
-      No hay ningún resultado para "${textoBuscado}"
-    </td>
-  `;
-  const tbody = document.querySelector('table tbody');
-  if (tbody) {
-    tbody.appendChild(mensaje);
-  } else if (tabla) {
-    tabla.appendChild(mensaje);
-  }
-}
-</script>
-
-  
   <!-- Contenido -->
-  <div style="width: 1500px; height: 580px; overflow: auto;" class="px-3 mt-3">
-    <div style="min-width: 1200px; padding: 20px;" class="bg-white rounded-3 shadow-sm">
+  <div class="px-3 mt-3 overflow-auto" style="width: 1500px; height: 580px;">
+    <div class="bg-white rounded-xl shadow p-6 min-w-[1200px]">
       <div class="solicitudes">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 fw-bold">Solicitudes de Constancias</h2>
-          <span class="badge bg-primary">{{ solicitudes|length }} solicitudes</span>
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-lg font-bold">Solicitudes de Constancias</h2>
+          <span class="px-3 py-1 text-sm rounded-full bg-blue-600 text-white">
+            {{ solicitudes|length }} solicitudes
+          </span>
         </div>
 
-        <div class="table-container">
-          <table class="solicitudes-table table table-hover align-middle">
-            <thead class="table-light">
+        <div class="overflow-x-auto">
+          <table id="contratos_table" class="min-w-full border border-gray-200 rounded-lg text-sm text-gray-700">
+            <thead class="bg-gray-100 text-xs font-semibold uppercase text-gray-600">
               <tr>
-                <th>Usuario</th>
-                <th>Documento</th>
-                <th>Comentario</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th class="px-4 py-2 text-left">Usuario</th>
+                <th class="px-4 py-2 text-left">Documento</th>
+                <th class="px-4 py-2 text-left">Comentario</th>
+                <th class="px-4 py-2 text-left">Estado</th>
+                <th class="px-4 py-2 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {% for s in solicitudes %}
-              <tr class="solicitud-row border rounded-3 shadow-sm" data-tipo="{{ s.tipo }}" data-estado="{{ s.estado }}" data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
-                <td class="fw-semibold">{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
-                <td>{{ s.usuario.numero_documento }}</td>
-                <td>{{ s.usuario. }}</td>
-                <td>
-                  <span class="status-badge {{ s.estado }} badge bg-secondary">{{ s.get_estado_display }}</span>
+              <tr class="solicitud-row border-b hover:bg-gray-50"
+                  x-show="filterTable('{{ s.usuario.nombres|escapejs }} {{ s.usuario.apellidos|escapejs }} {{ s.usuario.numero_documento|escapejs }} {{ s.get_estado_display|escapejs }}')"
+                  data-tipo="{{ s.tipo }}" 
+                  data-estado="{{ s.estado }}" 
+                  data-fecha="{{ s.creado_en|date:'Y-m-d' }}">
+                <td class="px-4 py-2 font-medium">{{ s.usuario.nombres }} {{ s.usuario.apellidos }}</td>
+                <td class="px-4 py-2">{{ s.usuario.numero_documento }}</td>
+                <td class="px-4 py-2">{{ s.comentario|default:"-" }}</td>
+                <td class="px-4 py-2">
+                  <span class="px-2 py-1 text-xs rounded bg-gray-300">{{ s.get_estado_display }}</span>
                 </td>
-                <td class="action-buttons d-flex gap-1">
+                <td class="px-4 py-2 flex gap-2">
+                  <!-- Ver contratos (abre modal lista) -->
                   <button 
-                    type="button" 
-                    class="btn btn-sm btn-primary open-contrato-modal" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#contratoModal"
-                    data-user-id="{{ s.usuario.id }}">
-                    <i class="fa fa-cogs"></i>
+                    class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    @click.prevent="openListForUser({{ s.usuario.id }})">
+                    📑
                   </button>
+
+                  <!-- Abrir formulario para crear/editar -->
                   <button 
-                    type="button" 
-                    class="btn btn-sm btn-secondary" 
-                    data-bs-target="#contratoModal"
-                    data-user-id="{{ s.usuario.id }}">
-                    <i class="fa fa-pen-nib"></i>
+                    class="px-2 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+                    @click.prevent="openFormForUser({{ s.usuario.id }})">
+                    ✏️
                   </button>
+
+                  <!-- Descargar (puedes cambiar a la acción que necesites) -->
                   <button 
-                    type="button" 
-                    class="btn btn-sm btn-outline-dark"
-                    data-bs-target="#contratoModal"
-                    data-user-id="{{ s.usuario.id }}">
-                    <i class="fa fa-download"></i>
+                    class="px-2 py-1 border rounded text-sm hover:bg-gray-200"
+                    @click.prevent="openListForUser({{ s.usuario.id }}); /* o llamar a otra función */">
+                    ⬇️
                   </button>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="empty-state text-center py-5">
+                <td colspan="5" class="text-center py-6 text-gray-500">
                   <i class="fas fa-folder-open fa-2x mb-2"></i>
-                  <h3>No hay solicitudes</h3>
-                  <p class="mb-0">No se encontraron solicitudes de constancias.</p>
+                  <p class="mt-2">No hay solicitudes</p>
                 </td>
               </tr>
               {% endfor %}
@@ -160,105 +100,159 @@ function mostrarMensajeNoResultados(textoBuscado) {
     </div>
   </div>
 
-{% comment %} =================== MODAL DE LISTA =================== {% endcomment %}
-<div class="modal fade" id="contratoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <input type="hidden" id="modal_usuario_id">
-      
-      <div class="modal-header d-flex justify-content-between align-items-center">
-        <h5 class="modal-title">Contratos del Usuario</h5>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-sm btn-success" id="nuevoContratoBtn">
-            <i class="fas fa-plus"></i>
+  <!-- Modal: Lista de contratos -->
+  <div 
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    x-show="openListModal"
+    x-transition
+    x-cloak
+  >
+    <div class="bg-white rounded-xl shadow-xl w-11/12 max-w-4xl p-6 relative">
+      <div class="flex justify-between items-center mb-4 border-b pb-2">
+        <h2 class="text-xl font-bold">Contratos Cargados</h2>
+        <div class="flex gap-2">
+          <button id="nuevoContratoBtn" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  @click.prevent="openFormForUser(currentUserId)">
+            ➕ Nuevo Contrato
           </button>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          <button 
+            class="px-3 py-1 text-gray-600 hover:text-gray-900"
+            @click="openListModal = false">
+            ✖
+          </button>
         </div>
       </div>
 
-      <div class="modal-body" id="contratosModalBody">
-        <p class="text-muted">Cargando contratos...</p>
+      <div id="contratosModalBody" class="overflow-y-auto max-h-[60vh]">
+        <!-- Se llena por refrescarContratos() -->
       </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="generarIndividual" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                @click.prevent="generarPaquete('individual')">
+          Generar Individual
+        </button>
+        <button id="generarBloque" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                @click.prevent="generarPaquete('bloque', $event.target)">
+          Generar Bloque
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Formulario de Contrato -->
+<div x-show="openFormModal" 
+     class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl flex flex-col"
+       @click.away="openFormModal = false">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center border-b px-4 py-2">
+      <h2 class="text-lg font-semibold">Contrato</h2>
+      <button @click="openFormModal = false" 
+              class="text-gray-500 hover:text-gray-700">✖</button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 py-3 overflow-y-auto max-h-[70vh] space-y-4">
+
+      <!-- Número de contrato + Fechas (misma fila) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="id_numero_contrato" class="block text-sm font-medium">Número de contrato</label>
+          <input type="text" id="id_numero_contrato" name="numero_contrato"
+                class="w-full border rounded p-2"
+                x-model="formData.numero_contrato">
+        </div>
+        <div>
+          <label for="id_fecha_generacion" class="block text-sm font-medium">Fecha de generación</label>
+          <input type="text" id="id_fecha_generacion" name="fecha_generacion"
+                class="w-full border rounded p-2"
+                x-model="formData.fecha_generacion">
+        </div>
+        <div>
+          <label for="id_fecha_inicio" class="block text-sm font-medium">Fecha de inicio</label>
+          <input type="text" id="id_fecha_inicio" name="fecha_inicio"
+                class="w-full border rounded p-2"
+                x-model="formData.fecha_inicio">
+        </div>
+      </div>
+
+      <!-- Fecha de fin + Valor -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="id_fecha_fin" class="block text-sm font-medium">Fecha de fin</label>
+          <input type="text" id="id_fecha_fin" name="fecha_fin"
+                class="w-full border rounded p-2"
+                x-model="formData.fecha_fin">
+        </div>
+        <div>
+          <label for="id_valor_pago" class="block text-sm font-medium">Valor</label>
+          <input type="text" id="id_valor_pago" name="valor_pago"
+                class="w-full border rounded p-2"
+                x-model="formData.valor_pago">
+        </div>
+      </div>
+
+      <!-- Archivo (visible solo si hay 5+ caracteres en número) -->
+      <div x-show="formData.numero_contrato.length >= 5">
+        <label for="id_archivo" class="block text-sm font-medium">Archivo</label>
+        <input type="file" id="id_archivo" name="archivo"
+              class="w-full border rounded p-2"
+              @change="handleFileChange">
+      </div>
+
+      <!-- Campos después de prefill -->
+      <div x-show="prefilled" class="space-y-4">
+
+        <!-- Objeto -->
+        <div>
+          <div class="flex justify-between items-center">
+            <label for="id_objeto" class="block text-sm font-medium">Objeto</label>
+            <button type="button" 
+                    class="text-blue-600 text-sm hover:underline"
+                    @click="editable.objeto = !editable.objeto">
+              <span x-text="editable.objeto ? 'Bloquear' : 'Editar'"></span>
+            </button>
+          </div>
+          <textarea id="id_objeto" name="objeto" rows="3"
+                    class="w-full border rounded p-2"
+                    x-model="formData.objeto"
+                    :readonly="!editable.objeto"></textarea>
+        </div>
+
+        <!-- Objetivos específicos -->
+        <div>
+          <div class="flex justify-between items-center">
+            <label for="id_objetivos_especificos" class="block text-sm font-medium">Objetivos específicos</label>
+            <button type="button" 
+                    class="text-blue-600 text-sm hover:underline"
+                    @click="editable.objetivos = !editable.objetivos">
+              <span x-text="editable.objetivos ? 'Bloquear' : 'Editar'"></span>
+            </button>
+          </div>
+          <textarea id="id_objetivos_especificos" name="objetivos_especificos" rows="4"
+                    class="w-full border rounded p-2"
+                    x-model="formData.objetivos_especificos"
+                    :readonly="!editable.objetivos"></textarea>
+        </div>
+      </div>
+
+      <!-- Errores -->
+      <div id="formModalErrors" class="text-red-600 text-sm"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-2 border-t px-4 py-2 bg-gray-50">
+      <button @click="guardarContrato" 
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Guardar
+      </button>
     </div>
   </div>
 </div>
 
-{% comment %} =================== MODAL DE FORMULARIO =================== {% endcomment %}
-<div class="modal fade" id="contratoFormModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form id="contratoFormModalForm" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="usuario_id" id="form_modal_usuario_id">
-
-        <div class="modal-header">
-          <h5 class="modal-title">Nuevo Contrato</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-
-        <div class="modal-body">
-          <div id="formModalAlerts" class="alert alert-danger" style="display:none;">
-            <div id="formModalErrors"></div>
-          </div>
-
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label for="id_numero_contrato" class="form-label">Número de Contrato</label>
-              <input type="text" class="form-control" id="id_numero_contrato" name="numero_contrato">
-              <div class="form-text">Ingrese el número exacto del contrato.</div>
-            </div>
-
-            <div class="col-md-3">
-              <label for="id_fecha_inicio" class="form-label">Fecha Inicio</label>
-              <input type="text" class="form-control" id="id_fecha_inicio" name="fecha_inicio" placeholder="dd/mm/aaaa">
-            </div>
-
-            <div class="col-md-3">
-              <label for="id_fecha_generacion" class="form-label">Fecha Generación</label>
-              <input type="text" class="form-control" id="id_fecha_generacion" name="fecha_generacion" placeholder="dd/mm/aaaa">
-            </div>
-
-            <div class="col-md-3">
-              <label for="id_fecha_fin" class="form-label">Fecha Fin (Plazo)</label>
-              <input type="text" class="form-control" id="id_fecha_fin" name="fecha_fin" placeholder="dd/mm/aaaa">
-            </div>
-
-            <div class="col-md-4">
-              <label for="id_valor_pago" class="form-label">Valor de Pago</label>
-              <input type="text" class="form-control" id="id_valor_pago" name="valor_pago" placeholder="$...">
-              <div class="form-text">Escriba el valor acordado del contrato.</div>
-            </div>
-
-            <div class="col-12">
-              <label for="id_archivo" class="form-label">Archivo PDF</label>
-              <input type="file" class="form-control" id="id_archivo" name="archivo" accept="application/pdf">
-              <div class="form-text">
-                Sube el PDF del contrato. Se extraerán automáticamente el Objeto, los Objetivos específicos, el Valor de pago y el Plazo.
-              </div>
-            </div>
-
-            <div class="col-12 mt-3" id="wrapper_objeto" style="display:none;">
-              <label for="id_objeto" class="form-label">Objeto</label>
-              <textarea class="form-control" id="id_objeto" name="objeto" rows="3" readonly></textarea>
-              <a href="#" id="edit_objeto" class="small text-primary">Editar</a>
-            </div>
-
-            <div class="col-12 mt-3" id="wrapper_objetivos" style="display:none;">
-              <label for="id_objetivos_especificos" class="form-label">Objetivos Específicos</label>
-              <textarea class="form-control" id="id_objetivos_especificos" name="objetivos_especificos" rows="3" readonly></textarea>
-              <a href="#" id="edit_objetivos" class="small text-primary">Editar</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-success" id="guardarOtroBtn">Guardar y cargar otro</button>
-          <button type="submit" class="btn btn-primary" id="guardarBtnForm">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>
 
 {% comment %} =================== URLS para JS =================== {% endcomment %}
