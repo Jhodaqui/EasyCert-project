@@ -284,6 +284,13 @@ def generate_individual_package(usuario, contratos_qs, template_docx_path):
         zf.write(excel_path, arcname="contratos.xlsx")
         for p in doc_paths:
             zf.write(p, arcname=os.path.basename(p))
+    
+    # nuevo para vistas
+    for p in doc_paths:
+        try:
+            shutil.copy(p , os.path.join(base_folder, os.path.basename(p)))
+        except Exception as e:
+            print("Error al copiar docx individual:", e)
 
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -392,6 +399,12 @@ def generate_block_package(usuario, contratos_qs, template_docx_path):
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.write(excel_path, arcname="contratos.xlsx")
             zf.write(bloque_path, arcname="contratos_bloque.docx")
+            
+        # copia el docx del bloque al folder del usuario 
+        try:
+            shutil.copy(bloque_path, os.path.join(base_folder, "contratos_bloque.docx"))
+        except Exception as e:
+            print("Error al copiar docx bloque:", e)
 
         return zip_path
 
