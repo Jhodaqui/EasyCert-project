@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // limpiar contenido previo
     modalBody.innerHTML = '<p class="text-center text-gray-500 py-6">Cargando...</p>';
 
-    fetch("/formulario-constancia/", {
+    fetch("/users/formulario-constancia/", {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     })
       .then((res) => {
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn.textContent = "Enviando...";
     }
 
-    fetch("/procesar-constancia/", {
+    fetch("/users/procesar-constancia/", {
       method: "POST",
       body: formData,
       headers: {
