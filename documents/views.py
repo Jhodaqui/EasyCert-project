@@ -1,4 +1,5 @@
 import os
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.template.loader import render_to_string
@@ -8,12 +9,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from io import BytesIO
+from docx import Document
 
 from .forms import ContratoUploadForm, ContratoModalForm
 from .models import TempExtractedData, UserContractData, Contrato
 from users.models import CustomUser
 from .utils import extract_key_value_from_pdf, extract_contract_metadata, generate_individual_package, generate_block_package
 from django.conf import settings
+from urllib.parse import unquote
 
 # para pruebas de pdf
 from django.http import HttpResponse
@@ -437,3 +440,94 @@ def generate_block_documents(request, user_id):
     except Exception as e:
         # registra/loguea si tienes logger
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    
+@login_required
+def listar_docx_guardados(request, user_id):
+    usuario = get_object_or_404(CustomUser, id=user_id)
+
+    # 🔹 Reglas de acceso
+    if request.user.id != usuario.id:
+        if not (request.user.role and request.user.role.nombre in ["Administrador", "Funcionario"]):
+            return JsonResponse({"ok": False, "error": "No autorizado"}, status=403)
+
+    folder_individual = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    folder_bloques = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques")
+    files = []
+    for folder in [folder_individual, folder_bloques]:
+        if os.path.isdir(folder):
+            for f in os.listdir(folder):
+                if f.lower().endswith(".docx"):
+                    files.append({"name": f})
+
+    return JsonResponse({"ok": True, "files": files})
+
+
+@login_required
+def preview_docx(request, user_id, filename):
+    usuario = get_object_or_404(CustomUser, id=user_id)
+
+    if request.user.id != usuario.id:
+        if not (request.user.role and request.user.role.nombre in ["Administrador", "Funcionario"]):
+            return JsonResponse({"ok": False, "error": "No autorizado"}, status=403)
+
+    filename = unquote(filename)
+    search_paths = [
+        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename),
+        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques", filename),
+    ]
+    file_path = next((p for p in search_paths if os.path.isfile(p)), None)
+    if not file_path:
+        return JsonResponse({"ok": False, "error": "Archivo no encontrado"}, status=404)
+
+    doc = Document(file_path)
+    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+    html_content = "".join([f"<p>{p}</p>" for p in paragraphs])
+
+    html = render_to_string("documents/partials/preview_docx.html", {
+        "filename": filename,
+        "html_content": html_content,
+    })
+    return JsonResponse({"ok": True, "html": html})
+
+
+@login_required
+def update_fecha_expedicion(request, user_id, filename):
+    if request.method not in ("POST", "PUT"):
+        return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
+
+    usuario = get_object_or_404(CustomUser, id=user_id)
+
+    if request.user.id != usuario.id:
+        if not (request.user.role and request.user.role.nombre in ["Administrador", "Funcionario"]):
+            return JsonResponse({"ok": False, "error": "No autorizado"}, status=403)
+
+    filename = unquote(filename)
+    data = request.POST or json.loads(request.body.decode("utf-8") or "{}")
+    nueva_fecha = data.get("fecha_expedicion")
+
+    if not nueva_fecha:
+        return JsonResponse({"ok": False, "error": "fecha_expedicion requerida"}, status=400)
+
+    search_paths = [
+        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename),
+        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques", filename),
+    ]
+    file_path = next((p for p in search_paths if os.path.isfile(p)), None)
+    if not file_path:
+        return JsonResponse({"ok": False, "error": "Archivo no encontrado"}, status=404)
+
+    try:
+        doc = Document(file_path)
+        replaced = False
+        for p in doc.paragraphs:
+            if "se expide" in (p.text or "").lower():
+                p.text = f"Se expide a solicitud del interesado(a), {nueva_fecha}."
+                replaced = True
+                break
+        if not replaced:
+            doc.add_paragraph(f"Se expide a solicitud del interesado(a), {nueva_fecha}.")
+        doc.save(file_path)
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Error actualizando docx: {str(e)}"}, status=500)
+
+    return JsonResponse({"ok": True, "message": "Fecha de expedición actualizada"})

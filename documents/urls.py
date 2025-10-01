@@ -10,6 +10,11 @@ urlpatterns = [
     path("contratos/<int:user_id>/", views.contratos_usuario_view, name="contratos_usuario"),
     path("contrato/prefill/", views.prefill_contrato, name="prefill_contrato"),
     path("contrato/<int:contrato_id>/", views.contrato_detail, name="contrato_detail"),
+    
+    path("listar-docx-guardados/<int:user_id>/", views.listar_docx_guardados, name="listar_docx_guardados"),
+    path("preview-docx/<int:user_id>/<str:filename>/", views.preview_docx, name="preview_docx"),
+    path("update-fecha-expedicion/<int:user_id>/<str:filename>/", views.update_fecha_expedicion, name="update_fecha_expedicion"),
+    
     path("generate-individual/<int:user_id>/", views.generate_individual_documents, name="generate_individual"),
     path("documents/contratos/bloques/<int:user_id>/", views.generate_block_documents, name="generate_block_documents"),
     # pruebas

@@ -67,21 +67,24 @@
                   <button 
                     class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
                     @click.prevent="openListForUser({{ s.usuario.id }})">
-                    📑
+                    <i class="fa-regular fa-folder-open"></i>
+                    <i class="fa-regular fa-file-lines"></i>
                   </button>
 
-                  <!-- Abrir formulario para crear/editar -->
+                  <!-- Editar contratos DOCX (abre modal editor) -->
                   <button 
                     class="px-2 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
-                    @click.prevent="openFormForUser({{ s.usuario.id }})">
-                    ✏️
+                    @click.prevent="$store.docxEditor.openForUser({{ s.usuario.id }})">
+                    <i class="fa-regular fa-pen-to-square"></i>
                   </button>
+
+
 
                   <!-- Descargar (puedes cambiar a la acción que necesites) -->
                   <button 
                     class="px-2 py-1 border rounded text-sm hover:bg-gray-200"
                     @click.prevent="openListForUser({{ s.usuario.id }}); /* o llamar a otra función */">
-                    ⬇️
+                    <i class="fa-regular fa-paper-plane"></i>
                   </button>
                 </td>
               </tr>
@@ -141,117 +144,150 @@
   </div>
 
   <!-- Modal de Formulario de Contrato -->
-<div x-show="openFormModal" 
-     class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+  <div x-show="openFormModal" 
+      class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
 
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl flex flex-col"
-       @click.away="openFormModal = false">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl flex flex-col"
+        @click.away="openFormModal = false">
 
-    <!-- Header -->
-    <div class="flex justify-between items-center border-b px-4 py-2">
-      <h2 class="text-lg font-semibold">Contrato</h2>
-      <button @click="openFormModal = false" 
-              class="text-gray-500 hover:text-gray-700">✖</button>
-    </div>
-
-    <!-- Body -->
-    <div class="px-4 py-3 overflow-y-auto max-h-[70vh] space-y-4">
-
-      <!-- Número de contrato + Fechas (misma fila) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label for="id_numero_contrato" class="block text-sm font-medium">Número de contrato</label>
-          <input type="text" id="id_numero_contrato" name="numero_contrato"
-                class="w-full border rounded p-2"
-                x-model="formData.numero_contrato">
-        </div>
-        <div>
-          <label for="id_fecha_generacion" class="block text-sm font-medium">Fecha de generación</label>
-          <input type="text" id="id_fecha_generacion" name="fecha_generacion"
-                class="w-full border rounded p-2"
-                x-model="formData.fecha_generacion">
-        </div>
-        <div>
-          <label for="id_fecha_inicio" class="block text-sm font-medium">Fecha de inicio</label>
-          <input type="text" id="id_fecha_inicio" name="fecha_inicio"
-                class="w-full border rounded p-2"
-                x-model="formData.fecha_inicio">
-        </div>
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b px-4 py-2">
+        <h2 class="text-lg font-semibold">Contrato</h2>
+        <button @click="openFormModal = false" 
+                class="text-gray-500 hover:text-gray-700">✖</button>
       </div>
 
-      <!-- Fecha de fin + Valor -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="id_fecha_fin" class="block text-sm font-medium">Fecha de fin</label>
-          <input type="text" id="id_fecha_fin" name="fecha_fin"
-                class="w-full border rounded p-2"
-                x-model="formData.fecha_fin">
-        </div>
-        <div>
-          <label for="id_valor_pago" class="block text-sm font-medium">Valor</label>
-          <input type="text" id="id_valor_pago" name="valor_pago"
-                class="w-full border rounded p-2"
-                x-model="formData.valor_pago">
-        </div>
-      </div>
+      <!-- Body -->
+      <div class="px-4 py-3 overflow-y-auto max-h-[70vh] space-y-4">
 
-      <!-- Archivo (visible solo si hay 5+ caracteres en número) -->
-      <div x-show="formData.numero_contrato.length >= 5">
-        <label for="id_archivo" class="block text-sm font-medium">Archivo</label>
-        <input type="file" id="id_archivo" name="archivo"
-              class="w-full border rounded p-2"
-              @change="handleFileChange">
-      </div>
-
-      <!-- Campos después de prefill -->
-      <div x-show="prefilled" class="space-y-4">
-
-        <!-- Objeto -->
-        <div>
-          <div class="flex justify-between items-center">
-            <label for="id_objeto" class="block text-sm font-medium">Objeto</label>
-            <button type="button" 
-                    class="text-blue-600 text-sm hover:underline"
-                    @click="editable.objeto = !editable.objeto">
-              <span x-text="editable.objeto ? 'Bloquear' : 'Editar'"></span>
-            </button>
+        <!-- Número de contrato + Fechas (misma fila) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="id_numero_contrato" class="block text-sm font-medium">Número de contrato</label>
+            <input type="text" id="id_numero_contrato" name="numero_contrato"
+                  class="w-full border rounded p-2"
+                  x-model="formData.numero_contrato">
           </div>
-          <textarea id="id_objeto" name="objeto" rows="3"
-                    class="w-full border rounded p-2"
-                    x-model="formData.objeto"
-                    :readonly="!editable.objeto"></textarea>
+          <div>
+            <label for="id_fecha_generacion" class="block text-sm font-medium">Fecha de generación</label>
+            <input type="text" id="id_fecha_generacion" name="fecha_generacion"
+                  class="w-full border rounded p-2"
+                  x-model="formData.fecha_generacion">
+          </div>
+          <div>
+            <label for="id_fecha_inicio" class="block text-sm font-medium">Fecha de inicio</label>
+            <input type="text" id="id_fecha_inicio" name="fecha_inicio"
+                  class="w-full border rounded p-2"
+                  x-model="formData.fecha_inicio">
+          </div>
         </div>
 
-        <!-- Objetivos específicos -->
-        <div>
-          <div class="flex justify-between items-center">
-            <label for="id_objetivos_especificos" class="block text-sm font-medium">Objetivos específicos</label>
-            <button type="button" 
-                    class="text-blue-600 text-sm hover:underline"
-                    @click="editable.objetivos = !editable.objetivos">
-              <span x-text="editable.objetivos ? 'Bloquear' : 'Editar'"></span>
-            </button>
+        <!-- Fecha de fin + Valor -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="id_fecha_fin" class="block text-sm font-medium">Fecha de fin</label>
+            <input type="text" id="id_fecha_fin" name="fecha_fin"
+                  class="w-full border rounded p-2"
+                  x-model="formData.fecha_fin">
           </div>
-          <textarea id="id_objetivos_especificos" name="objetivos_especificos" rows="4"
-                    class="w-full border rounded p-2"
-                    x-model="formData.objetivos_especificos"
-                    :readonly="!editable.objetivos"></textarea>
+          <div>
+            <label for="id_valor_pago" class="block text-sm font-medium">Valor</label>
+            <input type="text" id="id_valor_pago" name="valor_pago"
+                  class="w-full border rounded p-2"
+                  x-model="formData.valor_pago">
+          </div>
         </div>
+
+        <!-- Archivo (visible solo si hay 5+ caracteres en número) -->
+        <div x-show="formData.numero_contrato.length >= 5">
+          <label for="id_archivo" class="block text-sm font-medium">Archivo</label>
+          <input type="file" id="id_archivo" name="archivo"
+                class="w-full border rounded p-2"
+                @change="handleFileChange">
+        </div>
+
+        <!-- Campos después de prefill -->
+        <div x-show="prefilled" class="space-y-4">
+
+          <!-- Objeto -->
+          <div>
+            <div class="flex justify-between items-center">
+              <label for="id_objeto" class="block text-sm font-medium">Objeto</label>
+              <button type="button" 
+                      class="text-blue-600 text-sm hover:underline"
+                      @click="editable.objeto = !editable.objeto">
+                <span x-text="editable.objeto ? 'Bloquear' : 'Editar'"></span>
+              </button>
+            </div>
+            <textarea id="id_objeto" name="objeto" rows="3"
+                      class="w-full border rounded p-2"
+                      x-model="formData.objeto"
+                      :readonly="!editable.objeto"></textarea>
+          </div>
+
+          <!-- Objetivos específicos -->
+          <div>
+            <div class="flex justify-between items-center">
+              <label for="id_objetivos_especificos" class="block text-sm font-medium">Objetivos específicos</label>
+              <button type="button" 
+                      class="text-blue-600 text-sm hover:underline"
+                      @click="editable.objetivos = !editable.objetivos">
+                <span x-text="editable.objetivos ? 'Bloquear' : 'Editar'"></span>
+              </button>
+            </div>
+            <textarea id="id_objetivos_especificos" name="objetivos_especificos" rows="4"
+                      class="w-full border rounded p-2"
+                      x-model="formData.objetivos_especificos"
+                      :readonly="!editable.objetivos"></textarea>
+          </div>
+        </div>
+
+        <!-- Errores -->
+        <div id="formModalErrors" class="text-red-600 text-sm"></div>
       </div>
 
-      <!-- Errores -->
-      <div id="formModalErrors" class="text-red-600 text-sm"></div>
-    </div>
-
-    <!-- Footer -->
-    <div class="flex justify-end gap-2 border-t px-4 py-2 bg-gray-50">
-      <button @click="guardarContrato" 
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        Guardar
-      </button>
+      <!-- Footer -->
+      <div class="flex justify-end gap-2 border-t px-4 py-2 bg-gray-50">
+        <button @click="guardarContrato" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Guardar
+        </button>
+      </div>
     </div>
   </div>
-</div>
+
+    <!-- Modal de Edición DOCX -->
+  <div x-data x-show="$store.docxEditor.open" x-cloak 
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto p-4">
+      
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-lg font-semibold">📄 Edición de Contratos DOCX</h2>
+        <button @click="$store.docxEditor.close()" 
+                class="text-gray-500 hover:text-red-600">✖</button>
+      </div>
+
+      <!-- Lista de archivos -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <template x-for="file in $store.docxEditor.files" :key="file.name">
+          <button 
+            @click="$store.docxEditor.loadPreview(file.name)"
+            class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm"
+            x-text="file.name">
+          </button>
+        </template>
+      </div>
+
+      <!-- Vista previa -->
+      <div id="docxEditorContainer" class="min-h-[200px]">
+        <p class="text-gray-500">Selecciona un archivo para ver su contenido</p>
+      </div>
+
+    </div>
+  </div>
+
+
 
 </div>
 
@@ -268,5 +304,6 @@
 </script>
 
 <script src="{% static 'js/dashboard.js' %}"></script>
+<script src="{% static 'js/editor-docx.js' %}"></script>
 
 {% endblock %}

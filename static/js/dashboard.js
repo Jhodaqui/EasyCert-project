@@ -60,7 +60,7 @@ document.addEventListener("alpine:init", () => {
       // reset editable flags
       this.editable.objeto = false;
       this.editable.objetivos = false;
-    },
+    }, // resetForm
 
     showFormErrors(errs) {
       this.formModalHasErrors = true;
@@ -75,12 +75,12 @@ document.addEventListener("alpine:init", () => {
           errors.innerHTML += `<div>${k}: ${msgs}</div>`;
         }
       }
-    },
+    }, // showFormErrors
 
     filterTable(rowText) {
       if (!this.search) return true;
       return rowText.toLowerCase().includes(this.search.toLowerCase());
-    },
+    }, // filterTable
 
     // Abrir listado de contratos
     async openListForUser(userId) {
@@ -88,7 +88,7 @@ document.addEventListener("alpine:init", () => {
       this.formData.usuario_id = userId;
       this.openListModal = true;
       await this.refrescarContratos();
-    },
+    }, // openListForUser
 
     // Abrir formulario nuevo
     openFormForUser(userId) {
@@ -96,7 +96,7 @@ document.addEventListener("alpine:init", () => {
       this.formData.usuario_id = userId;
       this.resetForm();
       this.openFormModal = true;
-    },
+    }, // openFormForUser
 
     async refrescarContratos() {
       if (!this.currentUserId) return;
@@ -115,7 +115,7 @@ document.addEventListener("alpine:init", () => {
         console.error("Error refrescando contratos:", err);
         listModalBody.innerHTML = `<div class="text-red-600">Error cargando contratos.</div>`;
       }
-    },
+    }, // refrescarContratos
 
     bindAccionesContratos() {
       // Select/deselect all
@@ -186,7 +186,7 @@ document.addEventListener("alpine:init", () => {
           }
         });
       });
-    },
+    }, // bindAccionesContratos
 
     // Generar certificados (individual/bloque)
     async generarPaquete(tipo) {
@@ -209,14 +209,27 @@ document.addEventListener("alpine:init", () => {
         const res = await fetch(url, {
           method: "POST",
           headers: { "X-CSRFToken": csrfToken },
-          body: new URLSearchParams({ selected_ids: selected })
+          body: new URLSearchParams({ selected_ids: selected }),
+          credentials: "include"
         });
 
+        // ⚡ Arreglado: revisar content-type
+        const contentType = res.headers.get("content-type") || "";
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Error generando documentos");
+          if (contentType.includes("application/json")) {
+            const data = await res.json();
+            throw new Error(data.error || "Error generando documentos");
+          }
+          throw new Error("Error inesperado al generar documentos");
         }
 
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Error en servidor");
+          return;
+        }
+
+        // caso exitoso: ZIP
         const blob = await res.blob();
         const link = document.createElement("a");
         link.href = window.URL.createObjectURL(blob);
@@ -232,7 +245,7 @@ document.addEventListener("alpine:init", () => {
         console.error(err);
         Swal.fire("❌ Error", err.message || "Error al generar documentos", "error");
       }
-    },
+    }, // generarPaquete
 
     // Maneja el cambio del file input
     async handleFileChange(e) {
@@ -290,7 +303,7 @@ document.addEventListener("alpine:init", () => {
         this.fileUploaded = false;
         this.fileName = "";
       }
-    },
+    }, // handleFileChange
 
     // Guardar contrato
     async guardarContrato() {
@@ -324,7 +337,6 @@ document.addEventListener("alpine:init", () => {
         console.error(err);
         Swal.fire("❌ Error", "Error guardando contrato", "error");
       }
-    },
-
-  }));
-});
+    }, // guardarContrato
+  })); // Alpine.data
+}); // document.addEventListener
