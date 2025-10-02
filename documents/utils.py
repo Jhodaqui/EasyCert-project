@@ -217,84 +217,44 @@ def _format_as_singleline(raw):
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
-def generate_individual_package(usuario, contratos_qs, template_docx_path):
+def generate_individual_docx(usuario, contrato, template_docx_path):
     """
-    Genera:
-      - Un ZIP con todos los .docx generados + el Excel
-      - Se guarda únicamente el ZIP en media/usuarios/<documento>/individual/
+    Genera un único DOCX para un contrato específico
+    y lo guarda en la carpeta media/usuarios/<documento>/individual/.
+    Devuelve la ruta del archivo generado.
     """
-    import tempfile
-    import shutil
-
-    # carpeta destino
-    base_folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    base_folder = os.path.join(
+        settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual"
+    )
     os.makedirs(base_folder, exist_ok=True)
 
-    # --- Carpeta temporal ---
-    temp_dir = tempfile.mkdtemp()
+    nro = contrato.numero_contrato or f"id{contrato.id}"
+    out_name = f"{_safe_filename(nro)}.docx"
+    out_path = os.path.join(base_folder, out_name)
 
-    # --- Excel temporal ---
-    rows = []
-    for c in contratos_qs:
-        rows.append({
-            "NUMERO_CONTRATO": c.numero_contrato or "",
-            "FECHA_GENERACION": str(c.fecha_generacion or "").strip(),
-            "FECHA_INICIO": str(c.fecha_inicio or "").strip(),
-            "FECHA_FINAL": str(c.fecha_fin or "").strip(),
-            "VALOR_PAGO": str(c.valor_pago or "").strip(),
-            "OBJETO": _format_as_singleline(c.objeto),
-            "OBJETIVOS_ESPECIFICOS": _clean_multiline_text(c.objetivos_especificos),
-            "CONTRATO_ID": c.id,
-            "NOMBRE_COMPLETO": f"{usuario.nombres or ''} {usuario.apellidos or ''}".strip(),
-            "TIPO_DOCUMENTO": usuario.get_tipo_documento_display_full(),
-            "NUMERO_DOCUMENTO": usuario.numero_documento or "",
-            "EMAIL": usuario.email or "",
-        })
+    try:
+        with MailMerge(template_docx_path) as m:
+            row = {
+                "NUMERO_CONTRATO": contrato.numero_contrato or "",
+                "FECHA_GENERACION": str(contrato.fecha_generacion or "").strip(),
+                "FECHA_INICIO": str(contrato.fecha_inicio or "").strip(),
+                "FECHA_FINAL": str(contrato.fecha_fin or "").strip(),
+                "VALOR_PAGO": str(contrato.valor_pago or "").strip(),
+                "OBJETO": _clean_multiline_text(contrato.objeto),
+                "OBJETIVOS_ESPECIFICOS": _clean_multiline_text(contrato.objetivos_especificos),
+                "NOMBRE_COMPLETO": f"{usuario.nombres or ''} {usuario.apellidos or ''}".strip(),
+                "TIPO_DOCUMENTO": usuario.get_tipo_documento_display_full(),
+                "NUMERO_DOCUMENTO": usuario.numero_documento or "",
+                "EMAIL": usuario.email or "",
+            }
+            m.merge(**row)
+            m.write(out_path)
+    except Exception as e:
+        # fallback: guardar copia vacía
+        shutil.copy(template_docx_path, out_path)
+        print("Error generando DOCX:", e)
 
-    df = pd.DataFrame(rows)
-    excel_path = os.path.join(temp_dir, "contratos.xlsx")
-    df.to_excel(excel_path, index=False, engine="openpyxl")
-
-    # --- DOCX temporales ---
-    doc_paths = []
-    for row, contrato in zip(rows, contratos_qs):
-        nro = row.get("NUMERO_CONTRATO") or f"id{row.get('CONTRATO_ID')}"
-        out_name = f"{_safe_filename(nro)}.docx"
-        out_path = os.path.join(temp_dir, out_name)
-
-        try:
-            with MailMerge(template_docx_path) as m:
-                safe_row = {k: (v if v is not None else "") for k, v in row.items()}
-                safe_row.pop("CONTRATO_ID", None)
-
-                # 👇 Aquí sobreescribimos el objeto solo para Word con saltos
-                safe_row["OBJETO"] = _clean_multiline_text(contrato.objeto)
-
-                m.merge(**safe_row)
-                m.write(out_path)
-        except Exception:
-            shutil.copy(template_docx_path, out_path)
-
-        doc_paths.append(out_path)
-
-    # --- Crear ZIP ---
-    zip_name = f"contratos_{usuario.numero_documento}.zip"
-    zip_path = os.path.join(base_folder, zip_name)
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.write(excel_path, arcname="contratos.xlsx")
-        for p in doc_paths:
-            zf.write(p, arcname=os.path.basename(p))
-    
-    # nuevo para vistas
-    for p in doc_paths:
-        try:
-            shutil.copy(p , os.path.join(base_folder, os.path.basename(p)))
-        except Exception as e:
-            print("Error al copiar docx individual:", e)
-
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-    return zip_path
+    return out_path
 
 # generacion de certificado por bloques 
 
