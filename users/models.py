@@ -5,7 +5,7 @@ from django.contrib.auth.models import (
 )
 from django.conf import settings
 
-from certificates import apps
+from django.apps import apps
 
 TIPOS_DOCUMENTO = [
     ('CC', 'Cédula de ciudadanía'),
