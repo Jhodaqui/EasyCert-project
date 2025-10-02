@@ -12,3 +12,5 @@ reportlab
 openpyxl
 django-tailwind
 django-browser-reload
+html2docx
+mammoth

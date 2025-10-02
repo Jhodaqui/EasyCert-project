@@ -1,10 +1,9 @@
-import os
-import json
+import os, json, shutil, zipfile
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
 from django.contrib import messages
@@ -14,9 +13,10 @@ from docx import Document
 from .forms import ContratoUploadForm, ContratoModalForm
 from .models import TempExtractedData, UserContractData, Contrato
 from users.models import CustomUser
-from .utils import extract_key_value_from_pdf, extract_contract_metadata, generate_individual_package, generate_block_package
+from .utils import extract_key_value_from_pdf, extract_contract_metadata, generate_individual_docx, generate_block_package
 from django.conf import settings
 from urllib.parse import unquote
+from html2docx import html2docx
 
 # para pruebas de pdf
 from django.http import HttpResponse
@@ -381,33 +381,38 @@ def contrato_detail(request, contrato_id):
 @login_required
 @require_POST
 def generate_individual_documents(request, user_id):
-    """
-    POST params:
-      - selected_ids : (opcional) cadena separada por comas con ids de contratos.
-    Si no hay selected_ids, toma TODOS los contratos del usuario.
-    Devuelve un ZIP como FileResponse.
-    """
     usuario = get_object_or_404(CustomUser, id=user_id)
+
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
 
     selected = request.POST.get("selected_ids", "")
     contratos_qs = Contrato.objects.filter(usuario=usuario)
+
     if selected:
         ids = [int(x) for x in selected.split(",") if x.strip().isdigit()]
         contratos_qs = contratos_qs.filter(id__in=ids)
 
     if not contratos_qs.exists():
-        return JsonResponse({"ok": False, "error": "No se encontraron contratos para generar."}, status=400)
+        return JsonResponse({"ok": False, "error": "No se encontraron contratos"}, status=400)
 
-    # plantilla
-    template_path = os.path.join(settings.BASE_DIR, "templates", "base", "boceto para pruebas.docx")
+    template_path = os.path.join(
+        settings.BASE_DIR, "templates", "base", "boceto para pruebas.docx"
+    )
     if not os.path.isfile(template_path):
-        return JsonResponse({"ok": False, "error": "Plantilla boceto no encontrada en templates/base/."}, status=500)
+        return JsonResponse({"ok": False, "error": "Plantilla no encontrada"}, status=500)
 
     try:
-        zip_path = generate_individual_package(usuario, contratos_qs, template_path)
-        # devolver zip como respuesta descargable
-        response = FileResponse(open(zip_path, "rb"), as_attachment=True, filename=os.path.basename(zip_path))
-        return response
+        generated_files = []
+        for contrato in contratos_qs:
+            file_path = generate_individual_docx(usuario, contrato, template_path)
+            generated_files.append(os.path.basename(file_path))
+
+        return JsonResponse({
+            "ok": True,
+            "files": generated_files,
+            "message": f"{len(generated_files)} certificados generados correctamente"
+        })
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
     
@@ -440,7 +445,7 @@ def generate_block_documents(request, user_id):
     except Exception as e:
         # registra/loguea si tienes logger
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
-    
+
 @login_required
 def listar_docx_guardados(request, user_id):
     usuario = get_object_or_404(CustomUser, id=user_id)
@@ -461,73 +466,94 @@ def listar_docx_guardados(request, user_id):
 
     return JsonResponse({"ok": True, "files": files})
 
+#  esto es para dar acceso a cualquier usuario autorizado (admin, funcionario)
+def _can_access_user(request_user, target_user):
+    if request_user.id == target_user.id:
+        return True
+    if getattr(request_user, "role", None) and request_user.role.nombre in ["Administrador", "Funcionario"]:
+        return True
+    return False
 
-@login_required
+# vista para previsualizar docx
+@require_GET
 def preview_docx(request, user_id, filename):
+    """
+    Devuelve un .docx en binario para vista previa.
+    NO elimina el archivo, solo lo sirve.
+    """
     usuario = get_object_or_404(CustomUser, id=user_id)
+    folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    path = os.path.join(folder, filename)
 
-    if request.user.id != usuario.id:
-        if not (request.user.role and request.user.role.nombre in ["Administrador", "Funcionario"]):
-            return JsonResponse({"ok": False, "error": "No autorizado"}, status=403)
+    if not os.path.isfile(path):
+        raise Http404("Archivo no encontrado")
 
-    filename = unquote(filename)
-    search_paths = [
-        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename),
-        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques", filename),
-    ]
-    file_path = next((p for p in search_paths if os.path.isfile(p)), None)
-    if not file_path:
-        return JsonResponse({"ok": False, "error": "Archivo no encontrado"}, status=404)
+    return FileResponse(open(path, "rb"),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
-    doc = Document(file_path)
-    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-    html_content = "".join([f"<p>{p}</p>" for p in paragraphs])
-
-    html = render_to_string("documents/partials/preview_docx.html", {
-        "filename": filename,
-        "html_content": html_content,
-    })
-    return JsonResponse({"ok": True, "html": html})
-
-
-@login_required
-def update_fecha_expedicion(request, user_id, filename):
-    if request.method not in ("POST", "PUT"):
-        return JsonResponse({"ok": False, "error": "Método no permitido"}, status=405)
-
+# vista dedescarga para editar
+@require_GET
+def download_docx(request, user_id, filename):
+    """
+    Descarga el .docx y luego lo elimina de la carpeta.
+    Flujo pensado para 'Descargar para modificar'.
+    """
     usuario = get_object_or_404(CustomUser, id=user_id)
+    folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    path = os.path.join(folder, filename)
 
-    if request.user.id != usuario.id:
-        if not (request.user.role and request.user.role.nombre in ["Administrador", "Funcionario"]):
-            return JsonResponse({"ok": False, "error": "No autorizado"}, status=403)
+    if not os.path.isfile(path):
+        raise Http404("Archivo no encontrado")
 
-    filename = unquote(filename)
-    data = request.POST or json.loads(request.body.decode("utf-8") or "{}")
-    nueva_fecha = data.get("fecha_expedicion")
-
-    if not nueva_fecha:
-        return JsonResponse({"ok": False, "error": "fecha_expedicion requerida"}, status=400)
-
-    search_paths = [
-        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename),
-        os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques", filename),
-    ]
-    file_path = next((p for p in search_paths if os.path.isfile(p)), None)
-    if not file_path:
-        return JsonResponse({"ok": False, "error": "Archivo no encontrado"}, status=404)
-
+    response = FileResponse(open(path, "rb"), as_attachment=True, filename=filename)
     try:
-        doc = Document(file_path)
-        replaced = False
-        for p in doc.paragraphs:
-            if "se expide" in (p.text or "").lower():
-                p.text = f"Se expide a solicitud del interesado(a), {nueva_fecha}."
-                replaced = True
-                break
-        if not replaced:
-            doc.add_paragraph(f"Se expide a solicitud del interesado(a), {nueva_fecha}.")
-        doc.save(file_path)
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": f"Error actualizando docx: {str(e)}"}, status=500)
+        os.remove(path)
+    except Exception:
+        pass
 
-    return JsonResponse({"ok": True, "message": "Fecha de expedición actualizada"})
+    return response
+
+# Descargar y eliminar docx
+@login_required
+def download_and_delete_docx(request, user_id, filename):
+    usuario = get_object_or_404(CustomUser, id=user_id)
+
+    file_path = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename)
+    if not os.path.isfile(file_path):
+        return HttpResponse("Archivo no encontrado", status=404)
+
+    response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
+
+    # Eliminar tras descargar (se ejecuta después de terminar la respuesta)
+    def cleanup_file(path):
+        try:
+            os.remove(path)
+        except Exception as e:
+            print(f"Error eliminando {path}: {e}")
+
+    from threading import Timer
+    Timer(5.0, cleanup_file, args=[file_path]).start()  # lo elimina 5 seg después
+
+    return response
+
+@require_POST
+def upload_edited_docx(request, user_id):
+    """
+    Recibe un archivo editado y lo guarda en la carpeta del usuario.
+    Esto agrega el archivo a la lista que se mostrará después.
+    """
+    usuario = get_object_or_404(CustomUser, id=user_id)
+    folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
+    os.makedirs(folder, exist_ok=True)
+
+    file = request.FILES.get("archivo")
+    if not file:
+        return JsonResponse({"ok": False, "error": "No se envió archivo"}, status=400)
+
+    save_path = os.path.join(folder, file.name)
+    with open(save_path, "wb+") as dest:
+        for chunk in file.chunks():
+            dest.write(chunk)
+
+    return JsonResponse({"ok": True, "file": file.name})
+

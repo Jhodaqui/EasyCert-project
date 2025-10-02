@@ -188,64 +188,66 @@ document.addEventListener("alpine:init", () => {
       });
     }, // bindAccionesContratos
 
-    // Generar certificados (individual/bloque)
+    // Generar paquete (individual o bloque)
     async generarPaquete(tipo) {
-      if (!this.currentUserId) return;
+    if (!this.currentUserId) return;
 
-      const selected = [...document.querySelectorAll("#contratosCargadosWrapper .contrato-checkbox:checked")]
-        .map(cb => cb.value)
-        .join(",");
+    const selected = [...document.querySelectorAll("#contratosCargadosWrapper .contrato-checkbox:checked")]
+      .map(cb => cb.value)
+      .join(",");
 
-      if (!selected) {
-        Swal.fire("⚠️", "Debes seleccionar al menos un contrato.", "warning");
-        return;
-      }
+    if (!selected) {
+      Swal.fire("⚠️", "Debes seleccionar al menos un contrato.", "warning");
+      return;
+    }
 
-      const url = tipo === "individual"
-        ? `/documents/generate-individual/${this.currentUserId}/`
-        : `/documents/documents/contratos/bloques/${this.currentUserId}/`;
+    const url = tipo === "individual"
+      ? `/documents/generate-individual/${this.currentUserId}/`
+      : `/documents/contratos/bloques/${this.currentUserId}/`;
 
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "X-CSRFToken": csrfToken },
-          body: new URLSearchParams({ selected_ids: selected }),
-          credentials: "include"
-        });
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfToken },
+        body: new URLSearchParams({ selected_ids: selected }),
+        credentials: "include"
+      });
 
-        // ⚡ Arreglado: revisar content-type
-        const contentType = res.headers.get("content-type") || "";
-        if (!res.ok) {
-          if (contentType.includes("application/json")) {
-            const data = await res.json();
-            throw new Error(data.error || "Error generando documentos");
-          }
-          throw new Error("Error inesperado al generar documentos");
-        }
-
+      const contentType = res.headers.get("content-type") || "";
+      if (!res.ok) {
         if (contentType.includes("application/json")) {
           const data = await res.json();
-          if (!data.ok) throw new Error(data.error || "Error en servidor");
-          return;
+          throw new Error(data.error || "Error generando documentos");
         }
+        throw new Error("Error inesperado al generar documentos");
+      }
 
-        // caso exitoso: ZIP
+      if (tipo === "individual") {
+        // 🔹 Flujo INDIVIDUAL → JSON
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Error en servidor");
+
+        Swal.fire("✅", "Certificados individuales generados con éxito", "success");
+
+        // refrescar lista de DOCX en el modal de gestión
+        Alpine.store("docxEditor").openForUser(this.currentUserId);
+      } else {
+        // 🔹 Flujo BLOQUE → ZIP
         const blob = await res.blob();
         const link = document.createElement("a");
         link.href = window.URL.createObjectURL(blob);
-        link.download = tipo === "individual"
-          ? "certificados_individuales.zip"
-          : "certificados_bloque.zip";
+        link.download = "certificados_bloque.zip";
         document.body.appendChild(link);
         link.click();
         link.remove();
 
-        Swal.fire("✅", "Documentos generados con éxito", "success");
-      } catch (err) {
-        console.error(err);
-        Swal.fire("❌ Error", err.message || "Error al generar documentos", "error");
+        Swal.fire("✅", "Documento en bloque generado con éxito", "success");
       }
-    }, // generarPaquete
+    } catch (err) {
+      console.error(err);
+      Swal.fire("❌ Error", err.message || "Error al generar documentos", "error");
+    }
+  }, // generarPaquete
 
     // Maneja el cambio del file input
     async handleFileChange(e) {
