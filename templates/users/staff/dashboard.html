@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load static %} 
 {% block content %}
-<div class="p-6" x-data="dashboard()">
+<div class="min-h-screen flex flex-col bg-gray-100" x-data="dashboard()">
 
   <!-- Header -->
-  <div class="flex justify-between items-center px-3 py-2 bg-[#04364A] text-white rounded-t-lg">
+  <div class="flex justify-between items-center px-3 py-2 bg-[#04364A] text-white rounded-t-lg shadow">
     <div class="flex items-center">
       <img src="{% static 'img/sena-logo.png' %}" alt="sena Logo" class="h-10 mr-2">
       <span class="font-bold">EASYCERT</span>
@@ -18,7 +18,7 @@
   </div>
 
   <!-- Barra de búsqueda -->
-  <div class="flex justify-between items-center my-4">
+  <div class="flex justify-between items-center my-4 px-6">
     <input 
       type="text" 
       placeholder="Buscar contratos..." 
@@ -27,9 +27,9 @@
     >
   </div>
 
-  <!-- Contenido -->
-  <div class="px-3 mt-3 overflow-auto" style="width: 1500px; height: 580px;">
-    <div class="bg-white rounded-xl shadow p-6 min-w-[1200px]">
+  <!-- Contenido principal -->
+  <div class="flex-1 flex justify-center items-start px-6 pb-10">
+    <div class="bg-white rounded-xl shadow p-6 w-full max-w-[1500px] overflow-x-auto">
       <div class="solicitudes">
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-lg font-bold">Solicitudes de Constancias</h2>
@@ -63,7 +63,7 @@
                   <span class="px-2 py-1 text-xs rounded bg-gray-300">{{ s.get_estado_display }}</span>
                 </td>
                 <td class="px-4 py-2 flex gap-2">
-                  <!-- Ver contratos (abre modal lista) -->
+                  <!-- Ver contratos -->
                   <button 
                     class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
                     @click.prevent="openListForUser({{ s.usuario.id }})">
@@ -71,19 +71,17 @@
                     <i class="fa-regular fa-file-lines"></i>
                   </button>
 
-                  <!-- Editar contratos DOCX (abre modal editor) -->
+                  <!-- Editar DOCX -->
                   <button 
                     class="px-2 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
                     @click.prevent="$store.docxEditor.openForUser({{ s.usuario.id }})">
                     <i class="fa-regular fa-pen-to-square"></i>
                   </button>
 
-
-
-                  <!-- Descargar (puedes cambiar a la acción que necesites) -->
+                  <!-- Descargar -->
                   <button 
                     class="px-2 py-1 border rounded text-sm hover:bg-gray-200"
-                    @click.prevent="openListForUser({{ s.usuario.id }}); /* o llamar a otra función */">
+                    @click.prevent="openListForUser({{ s.usuario.id }})">
                     <i class="fa-regular fa-paper-plane"></i>
                   </button>
                 </td>
@@ -103,7 +101,9 @@
     </div>
   </div>
 
-  <!-- Modal: Lista de contratos -->
+  <!-- === MODALES === -->
+
+  <!-- Modal Lista de Contratos -->
   <div 
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     x-show="openListModal"
@@ -127,7 +127,7 @@
       </div>
 
       <div id="contratosModalBody" class="overflow-y-auto max-h-[60vh]">
-        <!-- Se llena por refrescarContratos() -->
+        <!-- Se llena dinámicamente -->
       </div>
 
       <div class="mt-4 flex justify-end gap-2">
@@ -143,240 +143,107 @@
     </div>
   </div>
 
-  <!-- Modal de Formulario de Contrato -->
+  <!-- Modal Formulario Contrato -->
   <div x-show="openFormModal" 
-      class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-
+       class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+       x-cloak>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl flex flex-col"
-        @click.away="openFormModal = false">
+         @click.away="openFormModal = false">
 
-      <!-- Header -->
       <div class="flex justify-between items-center border-b px-4 py-2">
         <h2 class="text-lg font-semibold">Contrato</h2>
-        <button @click="openFormModal = false" 
-                class="text-gray-500 hover:text-gray-700">✖</button>
+        <button @click="openFormModal = false" class="text-gray-500 hover:text-gray-700">✖</button>
       </div>
 
-      <!-- Body -->
       <div class="px-4 py-3 overflow-y-auto max-h-[70vh] space-y-4">
-
-        <!-- Número de contrato + Fechas (misma fila) -->
+        <!-- Número de contrato y fechas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label for="id_numero_contrato" class="block text-sm font-medium">Número de contrato</label>
-            <input type="text" id="id_numero_contrato" name="numero_contrato"
-                  class="w-full border rounded p-2"
-                  x-model="formData.numero_contrato">
+            <label class="block text-sm font-medium">Número de contrato</label>
+            <input type="text" class="w-full border rounded p-2" x-model="formData.numero_contrato">
           </div>
           <div>
-            <label for="id_fecha_generacion" class="block text-sm font-medium">Fecha de generación</label>
-            <input type="text" id="id_fecha_generacion" name="fecha_generacion"
-                  class="w-full border rounded p-2"
-                  x-model="formData.fecha_generacion">
+            <label class="block text-sm font-medium">Fecha de generación</label>
+            <input type="text" class="w-full border rounded p-2" x-model="formData.fecha_generacion">
           </div>
           <div>
-            <label for="id_fecha_inicio" class="block text-sm font-medium">Fecha de inicio</label>
-            <input type="text" id="id_fecha_inicio" name="fecha_inicio"
-                  class="w-full border rounded p-2"
-                  x-model="formData.fecha_inicio">
+            <label class="block text-sm font-medium">Fecha de inicio</label>
+            <input type="text" class="w-full border rounded p-2" x-model="formData.fecha_inicio">
           </div>
         </div>
 
-        <!-- Fecha de fin + Valor -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="id_fecha_fin" class="block text-sm font-medium">Fecha de fin</label>
-            <input type="text" id="id_fecha_fin" name="fecha_fin"
-                  class="w-full border rounded p-2"
-                  x-model="formData.fecha_fin">
+            <label class="block text-sm font-medium">Fecha de fin</label>
+            <input type="text" class="w-full border rounded p-2" x-model="formData.fecha_fin">
           </div>
           <div>
-            <label for="id_valor_pago" class="block text-sm font-medium">Valor</label>
-            <input type="text" id="id_valor_pago" name="valor_pago"
-                  class="w-full border rounded p-2"
-                  x-model="formData.valor_pago">
+            <label class="block text-sm font-medium">Valor</label>
+            <input type="text" class="w-full border rounded p-2" x-model="formData.valor_pago">
           </div>
         </div>
 
-        <!-- Archivo (visible solo si hay 5+ caracteres en número) -->
         <div x-show="formData.numero_contrato.length >= 5">
-          <label for="id_archivo" class="block text-sm font-medium">Archivo</label>
-          <input type="file" id="id_archivo" name="archivo"
-                class="w-full border rounded p-2"
-                @change="handleFileChange">
+          <label class="block text-sm font-medium">Archivo</label>
+          <input type="file" class="w-full border rounded p-2" @change="handleFileChange">
         </div>
 
-        <!-- Campos después de prefill -->
         <div x-show="prefilled" class="space-y-4">
-
-          <!-- Objeto -->
           <div>
             <div class="flex justify-between items-center">
-              <label for="id_objeto" class="block text-sm font-medium">Objeto</label>
-              <button type="button" 
-                      class="text-blue-600 text-sm hover:underline"
+              <label class="block text-sm font-medium">Objeto</label>
+              <button type="button" class="text-blue-600 text-sm hover:underline"
                       @click="editable.objeto = !editable.objeto">
                 <span x-text="editable.objeto ? 'Bloquear' : 'Editar'"></span>
               </button>
             </div>
-            <textarea id="id_objeto" name="objeto" rows="3"
-                      class="w-full border rounded p-2"
+            <textarea rows="3" class="w-full border rounded p-2"
                       x-model="formData.objeto"
                       :readonly="!editable.objeto"></textarea>
           </div>
 
-          <!-- Objetivos específicos -->
           <div>
             <div class="flex justify-between items-center">
-              <label for="id_objetivos_especificos" class="block text-sm font-medium">Objetivos específicos</label>
-              <button type="button" 
-                      class="text-blue-600 text-sm hover:underline"
+              <label class="block text-sm font-medium">Objetivos específicos</label>
+              <button type="button" class="text-blue-600 text-sm hover:underline"
                       @click="editable.objetivos = !editable.objetivos">
                 <span x-text="editable.objetivos ? 'Bloquear' : 'Editar'"></span>
               </button>
             </div>
-            <textarea id="id_objetivos_especificos" name="objetivos_especificos" rows="4"
-                      class="w-full border rounded p-2"
+            <textarea rows="4" class="w-full border rounded p-2"
                       x-model="formData.objetivos_especificos"
                       :readonly="!editable.objetivos"></textarea>
           </div>
         </div>
 
-        <!-- Errores -->
         <div id="formModalErrors" class="text-red-600 text-sm"></div>
       </div>
 
-      <!-- Footer -->
       <div class="flex justify-end gap-2 border-t px-4 py-2 bg-gray-50">
-        <button @click="guardarContrato" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button @click="guardarContrato" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Guardar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal de Gestión DOCX -->
-  <div x-data x-show="$store.docxEditor.open" x-cloak 
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-
-    <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[85vh] overflow-hidden">
-      <!-- Header -->
-      <div class="p-4 border-b flex items-center justify-between">
-        <h2 class="text-lg font-semibold">📑 Certificados generados</h2>
-        <button @click="$store.docxEditor.close()" 
-                class="text-gray-600 hover:text-red-600">✖</button>
-      </div>
-
-      <!-- Body -->
-      <div class="p-4 overflow-y-auto max-h-[65vh] space-y-2">
-        <template x-for="f in $store.docxEditor.files" :key="f.name">
-          <div class="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
-            <span class="text-sm text-gray-700 truncate" x-text="f.name"></span>
-            <button @click.prevent="$store.docxEditor.openPreview(f.name)"
-                    class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-              Vista previa
-            </button>
-          </div>
-        </template>
-
-        <template x-if="!$store.docxEditor.files.length">
-          <p class="text-gray-500 text-sm">No hay certificados generados todavía.</p>
-        </template>
-      </div>
-
-      <!-- Footer -->
-      <div class="p-4 border-t flex justify-end bg-gray-50">
-        <button @click="$store.docxEditor.close()" 
-                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-          Cerrar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de Vista Previa DOCX -->
-  <div 
-    x-data 
-    x-show="$store.previewDocx.open" 
-    x-cloak 
-    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
-
-      <!-- Header -->
-      <div class="p-4 border-b flex items-center justify-between bg-gray-50">
-        <h2 class="text-lg font-semibold">📄 Vista previa del contrato</h2>
-        <button 
-          @click="$store.previewDocx.close()" 
-          class="text-gray-600 hover:text-red-600"
-        >✖</button>
-      </div>
-
-      <!-- Body -->
-      <div class="flex-1 overflow-auto p-4 bg-gray-100">
-        <div id="docx-preview-container" class="bg-white p-4 shadow rounded min-h-[400px]">
-          <p class="text-gray-500">Cargando vista previa...</p>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="p-4 border-t flex justify-between items-center bg-gray-50">
-        
-        <!-- Nombre del archivo -->
-        <div class="text-sm text-gray-600" x-text="$store.previewDocx.fileName"></div>
-
-        <!-- Acciones -->
-        <div class="flex gap-2">
-          <!-- Descargar -->
-          <a 
-            :href="`/documents/contratos/download/${$store.previewDocx.userId}/${$store.previewDocx.fileName}`"
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            @click="$store.previewDocx.close()"
-          >
-            ⬇️ Descargar para modificar
-          </a>
-
-          <!-- Subir editado -->
-          <label class="px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700">
-            ⬆️ Subir certificado editado
-            <input type="file" class="hidden" @change="$store.previewDocx.uploadEdited($event)">
-          </label>
-
-          <!-- Cerrar -->
-          <button 
-            @click="$store.previewDocx.close()" 
-            class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
+  <!-- Modales del editor DOCX -->
+  {{ block.super }}
 
 </div>
 {% endblock %}
 
 {% block extra_js %}
-  <!-- Variables globales de esta vista -->
-  <script>
-    const csrfToken = "{{ csrf_token }}";
-    const urls = {
-      contratoCreate: "{% url 'documents:contrato_create_modal' %}",
-      prefillContrato: "{% url 'documents:prefill_contrato' %}",
-      verContratosBase: "/documents/contratos/",
-      generateIndividual: "{% url 'documents:generate_individual' 0 %}".replace("0", "USER_ID"),
-      generateBlock: "{% url 'documents:generate_block_documents' user_id=0 %}".replace("0", "USER_ID"),
-    };
-  </script>
-
-  <!-- Stores y lógica del editor DOCX -->
-  <script src="{% static 'js/editor-docx.js' %}"></script>
-
-  <!-- Lógica del dashboard -->
-  <script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+  const csrfToken = "{{ csrf_token }}";
+  const urls = {
+    contratoCreate: "{% url 'documents:contrato_create_modal' %}",
+    prefillContrato: "{% url 'documents:prefill_contrato' %}",
+    verContratosBase: "/documents/contratos/",
+    generateIndividual: "{% url 'documents:generate_individual' 0 %}".replace("0", "USER_ID"),
+    generateBlock: "{% url 'documents:generate_block_documents' user_id=0 %}".replace("0", "USER_ID"),
+  };
+</script>
+<script src="{% static 'js/editor-docx.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}
-
