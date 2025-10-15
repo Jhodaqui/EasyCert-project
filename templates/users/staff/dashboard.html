@@ -103,45 +103,59 @@
 
   <!-- === MODALES === -->
 
-  <!-- Modal Lista de Contratos -->
-  <div 
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    x-show="openListModal"
-    x-transition
-    x-cloak
-  >
-    <div class="bg-white rounded-xl shadow-xl w-11/12 max-w-4xl p-6 relative">
-      <div class="flex justify-between items-center mb-4 border-b pb-2">
-        <h2 class="text-xl font-bold">Contratos Cargados</h2>
-        <div class="flex gap-2">
-          <button id="nuevoContratoBtn" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  @click.prevent="openFormForUser(currentUserId)">
-            ➕ Nuevo Contrato
-          </button>
-          <button 
-            class="px-3 py-1 text-gray-600 hover:text-gray-900"
-            @click="openListModal = false">
-            ✖
-          </button>
-        </div>
-      </div>
-
-      <div id="contratosModalBody" class="overflow-y-auto max-h-[60vh]">
-        <!-- Se llena dinámicamente -->
-      </div>
-
-      <div class="mt-4 flex justify-end gap-2">
-        <button id="generarIndividual" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                @click.prevent="generarPaquete('individual')">
-          Generar Individual
+<!-- Modal Lista de Contratos -->
+<div 
+  class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+  x-show="openListModal"
+  x-transition
+  x-cloak
+>
+  <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl p-6 relative border border-gray-200">
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h2 class="text-xl font-semibold">📄 Contratos Cargados</h2>
+      <div class="flex gap-2">
+        <button 
+          id="nuevoContratoBtn" 
+          class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+          @click.prevent="openFormForUser(currentUserId)"
+        >
+          ➕ Nuevo Contrato
         </button>
-        <button id="generarBloque" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                @click.prevent="generarPaquete('bloque', $event.target)">
-          Generar Bloque
+        <button 
+          class="px-3 py-1 text-gray-600 hover:text-red-600"
+          @click="openListModal = false"
+        >
+          ✖
         </button>
       </div>
     </div>
+
+    <!-- Cuerpo del modal -->
+    <div id="contratosModalBody" class="overflow-y-auto max-h-[60vh]">
+      <!-- Se llena dinámicamente -->
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end gap-2 border-t pt-3 bg-gray-50 rounded-b-xl">
+      <button 
+        id="generarIndividual" 
+        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        @click.prevent="generarPaquete('individual')"
+      >
+        Generar Individual
+      </button>
+      <button 
+        id="generarBloque" 
+        class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        @click.prevent="generarPaquete('bloque', $event.target)"
+      >
+        Generar Bloque
+      </button>
+    </div>
   </div>
+</div>
+
 
   <!-- Modal Formulario Contrato -->
   <div x-show="openFormModal" 
