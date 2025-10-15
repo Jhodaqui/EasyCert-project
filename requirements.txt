@@ -4,10 +4,7 @@ python-dotenv
 python-docx
 PyPDF2
 pdfplumber
-python-magic==0.4.27
-gunicorn
-dj-database-url
-whitenoise
+python-magic-bin
 pandas
 docx-mailmerge
 weasyprint
