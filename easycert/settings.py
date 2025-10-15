@@ -166,9 +166,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-# Para desarrollo: imprime el correo en la consola
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "noreply@easycert.com"
 
 #  funcionamineto de correo y que envie al gmail del usuario
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
