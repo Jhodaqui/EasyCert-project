@@ -474,13 +474,9 @@ def _can_access_user(request_user, target_user):
         return True
     return False
 
-# vista para previsualizar docx
+# Vista para previsualizar .docx
 @require_GET
 def preview_docx(request, user_id, filename):
-    """
-    Devuelve un .docx en binario para vista previa.
-    NO elimina el archivo, solo lo sirve.
-    """
     usuario = get_object_or_404(CustomUser, id=user_id)
     folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
     path = os.path.join(folder, filename)
@@ -491,40 +487,17 @@ def preview_docx(request, user_id, filename):
     return FileResponse(open(path, "rb"),
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
-# vista dedescarga para editar
-@require_GET
-def download_docx(request, user_id, filename):
-    """
-    Descarga el .docx y luego lo elimina de la carpeta.
-    Flujo pensado para 'Descargar para modificar'.
-    """
-    usuario = get_object_or_404(CustomUser, id=user_id)
-    folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
-    path = os.path.join(folder, filename)
-
-    if not os.path.isfile(path):
-        raise Http404("Archivo no encontrado")
-
-    response = FileResponse(open(path, "rb"), as_attachment=True, filename=filename)
-    try:
-        os.remove(path)
-    except Exception:
-        pass
-
-    return response
-
-# Descargar y eliminar docx
+# Descargar y eliminar el archivo
 @login_required
+@require_GET
 def download_and_delete_docx(request, user_id, filename):
     usuario = get_object_or_404(CustomUser, id=user_id)
-
     file_path = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual", filename)
     if not os.path.isfile(file_path):
         return HttpResponse("Archivo no encontrado", status=404)
 
     response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
 
-    # Eliminar tras descargar (se ejecuta después de terminar la respuesta)
     def cleanup_file(path):
         try:
             os.remove(path)
@@ -532,16 +505,12 @@ def download_and_delete_docx(request, user_id, filename):
             print(f"Error eliminando {path}: {e}")
 
     from threading import Timer
-    Timer(5.0, cleanup_file, args=[file_path]).start()  # lo elimina 5 seg después
-
+    Timer(5.0, cleanup_file, args=[file_path]).start()
     return response
 
+# Subir el nuevo archivo editado y regenerar ZIP
 @require_POST
 def upload_edited_docx(request, user_id):
-    """
-    Recibe un archivo editado y lo guarda en la carpeta del usuario.
-    Esto agrega el archivo a la lista que se mostrará después.
-    """
     usuario = get_object_or_404(CustomUser, id=user_id)
     folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "individual")
     os.makedirs(folder, exist_ok=True)
@@ -555,5 +524,15 @@ def upload_edited_docx(request, user_id):
         for chunk in file.chunks():
             dest.write(chunk)
 
-    return JsonResponse({"ok": True, "file": file.name})
+    # regenerar ZIP si existe bloque
+    bloque_folder = os.path.join(settings.MEDIA_ROOT, "usuarios", usuario.numero_documento, "bloques")
+    zip_path = os.path.join(bloque_folder, f"contratos_bloque_{usuario.numero_documento}.zip")
+    if os.path.exists(bloque_folder):
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in os.listdir(bloque_folder):
+                if f.endswith(".docx") or f.endswith(".xlsx"):
+                    zf.write(os.path.join(bloque_folder, f), arcname=f)
+
+    return JsonResponse({"ok": True, "file": file.name, "message": "Documento actualizado y ZIP regenerado"})
+
 

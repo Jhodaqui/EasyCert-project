@@ -13,7 +13,7 @@ urlpatterns = [
     
     path("listar-docx-guardados/<int:user_id>/", views.listar_docx_guardados, name="listar_docx_guardados"),
     path("contratos/preview/<int:user_id>/<str:filename>/", views.preview_docx, name="preview_docx"),
-    path("contratos/download/<int:user_id>/<str:filename>/", views.download_docx, name="download_docx"),
+    path("contratos/download/<int:user_id>/<str:filename>/", views.download_and_delete_docx, name="download_docx"),
     path("contratos/upload/<int:user_id>/", views.upload_edited_docx, name="upload_docx"),
     
     path("generate-individual/<int:user_id>/", views.generate_individual_documents, name="generate_individual"),
